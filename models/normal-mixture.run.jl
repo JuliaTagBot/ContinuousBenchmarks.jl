@@ -1,0 +1,17 @@
+using Turing, TuringBenchmarks
+using Stan
+
+include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "normal-mixture-stan.data.jl")
+include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "normal-mixture.model.jl")
+include(joinpath(TuringBenchmarks.MODELS_DIR, "normal-mixture-stan.run.jl")
+
+# NOTE: I only run a sub-set of the data as running the whole is quite slow
+tbenchmark("Gibbs(10, HMC(1, 0.05, 1, :theta), PG(50, 1, :k), HMC(1, 0.2, 3, :mu))", "nmmodel", "simplenormalmixturestandata[1][\"y\"][1:100]")
+
+bench_res = tbenchmark("Gibbs(1000, HMC(1, 0.05, 1, :theta), PG(50, 1, :k), HMC(1, 0.2, 3, :mu))", "nmmodel", "simplenormalmixturestandata[1][\"y\"][1:100]")
+logd = build_logd("Simple Gaussian Mixture Model", bench_res...)
+
+logd["stan"] = Dict("theta" => mean(nm_theta), "mu[1]" => mean(nm_mu_1), "mu[2]" =>mean(nm_mu_2))
+logd["time_stan"] = nm_time
+
+print_log(logd, ["theta", "mu[1]", "mu[2]"])
