@@ -1,0 +1,3 @@
+src/cmdstan_home.jl
+cmdstan/
+deps/build.log
