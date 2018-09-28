@@ -8,7 +8,7 @@ for (root, dirs, files) in walkdir(TuringBenchmarks.BENCH_DIR)
             filepath = joinpath(root, file)
             println("Testing `$model` ... ")
             job = `julia -e " cd(\"$(pwd())\"); 
-                                CMDSTAN_HOME = \"$CMDSTAN_HOME\";
+                                CMDSTAN_HOME = \"$(TuringBenchmarks.CMDSTAN_HOME)\";
                                 using Turing, TuringBenchmarks;
                                 TuringBenchmarks.SEND_SUMMARY[] = false;
                                 include(TuringBenchmarks.BENCH_DIR*\"/$(model).run.jl\")"`
