@@ -1,5 +1,5 @@
 using Turing, TuringBenchmarks
-using Stan
+
 
 odeDataRaw = readcsv(joinpath(TuringBenchmarks.DATA_DIR, "toy-data", "ode.csv")
 

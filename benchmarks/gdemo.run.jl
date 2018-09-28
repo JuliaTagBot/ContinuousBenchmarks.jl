@@ -1,8 +1,8 @@
 using Turing, TuringBenchmarks
-using Stan
+
 
 include(joinpath(TuringBenchmarks.DATA_DIR, "toy-data", "gauss.data.jl")
-include(joinpath(TuringBenchmarks.MODELS_DIR, "toy-models", "gauss.model.jl")
+include(joinpath(TuringBenchmarks.BENCH_DIR, "toy-models", "gauss.model.jl")
 
 tbenchmark("PG(20, 20)", "gaussmodel", "gaussdata")
 

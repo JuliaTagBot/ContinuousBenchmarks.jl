@@ -1,5 +1,5 @@
 using Turing, TuringBenchmarks
-using Stan
+
 #using Mamba: describe
 
 include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "binormal-stan.model.jl")

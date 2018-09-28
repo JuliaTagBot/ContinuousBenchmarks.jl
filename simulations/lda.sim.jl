@@ -1,5 +1,6 @@
-using Distributions
-using HDF5, JLD2, TuringBenchmarks
+module LDA_SIM
+
+using FileIO, JLD2, Turing, TuringBenchmarks
 
 # V <- 5; # words: river, stream, bank, money, loan
 # K <- 2; # topics: RIVER, BANK
@@ -17,11 +18,11 @@ beta = collect(ones(V) / V);
 # phi[1,] = c(0.330, 0.330, 0.330, 0.005, 0.005);
 # phi[2,] = c(0.005, 0.005, 0.330, 0.330, 0.330);
 phi = rand(Dirichlet(beta), K)
-println(phi)
+#println(phi)
 
 # theta <- rdirichlet(M,alpha);
 theta = rand(Dirichlet(alpha), M)
-println(theta)
+#println(theta)
 
 # avg_doc_length <- 10;
 avg_doc_length = 1000
@@ -34,8 +35,8 @@ N = sum(doc_length)
 
 # w <- rep(NA,N);
 # doc <- rep(NA,N);
-w = Vector{Int}(N)
-doc = Vector{Int}(N)
+w = Vector{Int}(undef, N)
+doc = Vector{Int}(undef, N)
 
 # n <- 1;
 # for (m in 1:M) {
@@ -48,29 +49,31 @@ doc = Vector{Int}(N)
 # }
 n = 1
 for m = 1:M, i=1:doc_length[m]
+    global n
     z = rand(Categorical(theta[:,m]))
     w[n] = rand(Categorical(phi[:,z]))
     doc[n] = m
     n = n + 1
 end
 
-
-const ldastandata = [
-  Dict(
-  "K" => K,
-  "V" => V,
-  "M" => M,
-  "N" => N,
-  "w" => w,
-  "doc" => doc,
-  "alpha" => alpha,
-  "beta" => beta,
-#   "phi" => phi,
-#   "theta" => theta,
-#   "D" => M * K + K * V
+ldastandata = [
+    Dict(
+    "K" => K,
+    "V" => V,
+    "M" => M,
+    "N" => N,
+    "w" => w,
+    "doc" => doc,
+    "alpha" => alpha,
+    "beta" => beta,
+    # "phi" => phi,
+    # "theta" => theta,
+    # "D" => M * K + K * V
   )
 ]
 
 # println(ldastandata)
 
-save(joinpath(TuringBenchmarks.STAN_DATA_DIR, "ldastandata.jld2", "data", ldastandata)
+save(joinpath(TuringBenchmarks.STAN_DATA_DIR, "ldastandata.jld2"), "data", ldastandata)
+
+end

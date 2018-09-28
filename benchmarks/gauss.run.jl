@@ -1,10 +1,10 @@
 using Turing, TuringBenchmarks
-using Stan
+
 using Requests
 import Requests: get, post, put, delete, options, FileParam
 
 include(joinpath(TuringBenchmarks.DATA_DIR, "toy-data", "gdemo-stan.data.jl")
-include(joinpath(TuringBenchmarks.MODELS_DIR, "toy-models", "gdemo.model.jl")
+include(joinpath(TuringBenchmarks.BENCH_DIR, "toy-models", "gdemo.model.jl")
 
 tbenchmark("HMC(20, 0.1, 3)", "simplegaussmodel", "data=simplegaussstandata[1]")
 

@@ -9,16 +9,21 @@ export  benchmark_turing,
         send_str,
         vis_topic_res
 
-using StatPlots
-using DataFrames
+# using StatPlots
+# using DataFrames
 
-const MODELS_DIR = joinpath(@__DIR__, "models")
-const STAN_MODELS_DIR = joinpath(@__DIR__, "models", "stan-models")
+const MODELS_DIR = joinpath(@__DIR__, "..", "models")
+const STAN_MODELS_DIR = joinpath(MODELS_DIR, "stan-models")
 
-const DATA_DIR = joinpath(@__DIR__, "data")
-const STAN_DATA_DIR = joinpath(@__DIR__, "data", "stan-data")
+const DATA_DIR = joinpath(@__DIR__, "..", "data")
+const STAN_DATA_DIR = joinpath(DATA_DIR, "stan-data")
 
-const SIMULATIONS_DIR = joinpath(@__DIR__, "simulations")
+const BENCH_DIR = joinpath(@__DIR__, "..", "benchmarks")
+const SIMULATIONS_DIR = joinpath(@__DIR__, "..", "simulations")
+
+const CMDSTAN_HOME = joinpath(@__DIR__, "..", "cmdstan")
+
+const SEND_SUMMARY = Ref(true)
 
 # NOTE: put Stan models before Turing ones if you want to compare them in print_log
 const default_model_list = ["gdemo-geweke",
@@ -128,7 +133,9 @@ function send_log(logd::Dict, monitor=[])
     time_str = "$(Dates.format(now(), "dd-u-yyyy-HH-MM-SS"))"
     logd["created"] = time_str
     logd["commit"] = commit_str
-    post("https://api.mlab.com/api/1/databases/benchmark/collections/log?apiKey=Hak1H9--KFJz7aAx2rAbNNgub1KEylgN"; json=logd)
+    if SEND_SUMMARY[]
+        post("https://api.mlab.com/api/1/databases/benchmark/collections/log?apiKey=Hak1H9--KFJz7aAx2rAbNNgub1KEylgN"; json=logd)
+    end
 end
 
 function send_str(str::String, fname::String)
@@ -171,10 +178,9 @@ function benchmark_turing(model_list=default_model_list)
     for model in model_list
         println("Benchmarking `$model` ... ")
         job = `julia -e " cd(\"$(pwd())\"); 
-                            include(dirname(\"$(@__FILE__)\")*\"/benchmarkhelper.jl\");
                             CMDSTAN_HOME = \"$CMDSTAN_HOME\";
-                            using Turing, Stan, TuringBenchmarks;
-                            include(dirname(\"$(@__FILE__)\")*\"/$(model).run.jl\") "`
+                            using Turing, TuringBenchmarks;
+                            include(TuringBenchmarks.BENCH_DIR*\"/$(model).run.jl\") "`
         println(job); run(job)
         println("`$model` ✓")
     end
@@ -182,8 +188,7 @@ function benchmark_turing(model_list=default_model_list)
     println("Turing benchmarking completed.")
 end
 
-end
-
+#=
 """
 Function for visualization topic models.
 
@@ -205,8 +210,11 @@ function vis_topic_res(samples, K, V, avg_range)
     end
 
     df = DataFrame(Topic = vec(repmat(collect(1:K)', V, 1)),
-                  Word = vec(repmat(collect(1:V)', 1, K)),
-                  Probability = vec(phi))
+                Word = vec(repmat(collect(1:V)', 1, K)),
+                Probability = vec(phi))
 
     return @df df plot(:Word, [:Topic], colour = [:Probability])
 end
+=#
+
+end #module

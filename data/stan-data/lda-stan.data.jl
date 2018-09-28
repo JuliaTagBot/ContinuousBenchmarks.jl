@@ -1,5 +1,4 @@
-TPATH = splitdir(Base.@__DIR__)[1]
-using HDF5, JLD2
+using TuringBenchmarks, HDF5, JLD2
 
 # const ldastandata = [
 # Dict(
@@ -48,10 +47,9 @@ using HDF5, JLD2
 # )
 # ]
 
-
-# # const ldastandata = load(TPATH*"/stan-models/ldastandata.jld")["data"]
-# const ldastandata = load(TPATH*"/stan-models/ldastandataV20K2M25L100.data")["data"]
-const ldastandata = load(TPATH*"/stan-models/ldastandataV100K5M10L1000.data")["data"]
+const ldastandata = load(joinpath(TuringBenchmarks.STAN_DATA_DIR, "ldastandata.jld2"))["data"]
+# const ldastandata = load(joinpath(TuringBenchmarks.STAN_DATA_DIR, "ldastandataV20K2M25L100.data"))["data"]
+# const ldastandata = load(joinpath(TuringBenchmarks.STAN_DATA_DIR, "ldastandataV100K5M10L1000.data"))["data"]
 
 # using PyCall
 # @pyimport pickle

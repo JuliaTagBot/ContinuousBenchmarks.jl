@@ -1,9 +1,9 @@
 using Turing, TuringBenchmarks
-using Stan
+
 
 include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "normal-mixture-stan.data.jl")
 include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "normal-mixture.model.jl")
-include(joinpath(TuringBenchmarks.MODELS_DIR, "normal-mixture-stan.run.jl")
+include(joinpath(TuringBenchmarks.BENCH_DIR, "normal-mixture-stan.run.jl")
 
 # NOTE: I only run a sub-set of the data as running the whole is quite slow
 tbenchmark("Gibbs(10, HMC(1, 0.05, 1, :theta), PG(50, 1, :k), HMC(1, 0.2, 3, :mu))", "nmmodel", "simplenormalmixturestandata[1][\"y\"][1:100]")

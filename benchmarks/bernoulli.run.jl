@@ -1,5 +1,5 @@
 using Turing, TuringBenchmarks
-using Stan
+
 using Requests
 import Requests: get, post, put, delete, options, FileParam
 

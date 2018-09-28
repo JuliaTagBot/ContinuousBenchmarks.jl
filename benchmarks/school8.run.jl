@@ -4,7 +4,7 @@ using Requests
 import Requests: get, post, put, delete, options, FileParam
 
 include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "school8-stan.data.jl")
-include(joinpath(TuringBenchmarks.MODELS_DIR, "school8.model.jl")
+include(joinpath(TuringBenchmarks.BENCH_DIR, "school8.model.jl")
 
 data = deepcopy(schools8data[1])
 delete!(data, "tau")

@@ -1,11 +1,11 @@
 using Turing, TuringBenchmarks
-using Stan
+
 using Requests
 import Requests: get, post, put, delete, options, FileParam
 
 include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "MoC-stan.data.jl")
 include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "MoC.model.jl")
-include(joinpath(TuringBenchmarks.MODELS_DIR, "MoC-stan.run.jl")
+include(joinpath(TuringBenchmarks.BENCH_DIR, "MoC-stan.run.jl")
 
 setadbackend(:reverse_diff)
 

@@ -1,5 +1,5 @@
 using Turing, TuringBenchmarks
-using Stan
+
 
 include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "normal-mixture-stan.data.jl")
 include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "normal-mixture-stan.model.jl")

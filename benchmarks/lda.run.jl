@@ -1,12 +1,12 @@
 using Turing, TuringBenchmarks
-using Stan
+
 
 using Requests
 import Requests: get, post, put, delete, options, FileParam
 
 include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "lda-stan.data.jl")
 include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "lda-stan.model.jl")
-include(joinpath(TuringBenchmarks.MODELS_DIR, "lda-stan.run.jl")
+include(joinpath(TuringBenchmarks.BENCH_DIR, "lda-stan.run.jl")
 
 # setchunksize(100)
 setadbackend(:reverse_diff)

@@ -2,7 +2,7 @@
 
 using Turing, TuringBenchmarks
 using Mamba: describe
-using Stan
+
 using Requests
 import Requests: get, post, put, delete, options, FileParam
 

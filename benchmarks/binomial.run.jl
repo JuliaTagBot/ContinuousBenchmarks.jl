@@ -1,5 +1,5 @@
 using Turing, TuringBenchmarks
-using Stan
+
 using Mamba: describe
 
 const binomialstanmodel = "
