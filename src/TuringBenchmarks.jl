@@ -2,12 +2,14 @@ module TuringBenchmarks
 
 using Statistics
 
-export  benchmark_turing,
+export  benchmark_models,
+        benchmark_files,
         @tbenchmark, 
         get_stan_time, 
         build_logd, 
         send_log,
-        print_log
+        print_log, 
+        getbenchpath
         #vis_topic_res
 
 # using StatPlots
@@ -162,19 +164,42 @@ function gen_mkd_table_for_commit(commit)
     mkd
 end
 
-function benchmark_turing(model_list=default_model_list)
+function benchmark_models(model_list=default_model_list; send = true)
     println("Turing benchmarking started.")
     for model in model_list
-        println("Benchmarking `$model` ... ")
-        job = `julia -e " cd(\"$(pwd())\"); 
-                            CMDSTAN_HOME = \"$CMDSTAN_HOME\";
-                            using Turing, TuringBenchmarks;
-                            include(TuringBenchmarks.BENCH_DIR*\"/$(model).run.jl\") "`
-        println(job); run(job)
-        println("`$model` ✓")
+        _benchmark_model(model, send=send)
     end
-
     println("Turing benchmarking completed.")
+end
+
+function benchmark_files(file_list=default_model_list; send = true)
+    println("Turing benchmarking started.")    
+    for file in file_list
+        _benchmark_file(file)
+    end
+    println("Turing benchmarking completed.")
+end
+
+function _benchmark_model(modelname; send = true)
+    println("Benchmarking `$modelname` ... ")
+    filepath = getbenchpath(modelname)
+    _benchmark_file(filepath, send=send, status = false)
+    println("`$modelname` ✓")
+    return 
+end
+
+getbenchpath(modelname) = joinpath(TuringBenchmarks.BENCH_DIR, "$(modelname).run.jl")
+
+function _benchmark_file(filepath; send = true, status = false)
+    status && println("Benchmarking `$filepath` ... ")
+    send_code = send ? "TuringBenchmarks.SEND_SUMMARY[] = false;" : ""
+    job = `julia -e "   using Turing, TuringBenchmarks, Stan;
+                        Stan.set_cmdstan_home!(\"$(replace(TuringBenchmarks.CMDSTAN_HOME, "\\"=>"\\\\"))\");
+                        $send_code
+                        include(\"$(replace(filepath, "\\"=>"\\\\"))\")"`
+    println(job); run(job)
+    status && println("`$filepath` ✓")
+    return 
 end
 
 #=
