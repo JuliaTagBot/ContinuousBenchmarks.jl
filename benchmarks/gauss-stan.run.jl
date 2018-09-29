@@ -1,11 +1,11 @@
 using Turing, TuringBenchmarks
-
+using Stan
 
 include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "bernoulli-stan.data.jl"))
 include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "bernoulli-stan.model.jl"))
 
-include(splitdir(Base.@__DIR__)[1]*"/toy-models/gdemo-stan.data.jl")
-include(splitdir(Base.@__DIR__)[1]*"/toy-models/gdemo-stan.model.jl")
+include(joinpath(TuringBenchmarks.DATA_DIR, "toy-data", "gdemo-stan.data.jl")
+include(joinpath(TuringBenchmarks.MODELS_DIR, "toy-models", "gdemo-stan.model.jl")
 
 stan_model_name = "simplegauss"
 simplegaussstan = Stanmodel(name=stan_model_name, model=simplegaussstanmodel, nchains=1);

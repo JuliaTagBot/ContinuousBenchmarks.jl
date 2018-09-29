@@ -28,10 +28,10 @@ for (root, dirs, files) in walkdir(TuringBenchmarks.BENCH_DIR)
             filepath = abspath(joinpath(root, file))
             println("Testing `$file` ... ")
             job = `julia -e " cd(\"$(replace(pwd(), "\\"=>"\\\\"))\"); 
-                                CMDSTAN_HOME = \"$(replace(TuringBenchmarks.CMDSTAN_HOME, "\\"=>"\\\\"))\";
-                                using Turing, TuringBenchmarks;
-                                TuringBenchmarks.SEND_SUMMARY[] = false;
-                                include(\"$(replace(filepath, "\\"=>"\\\\"))\")"`
+                              using Turing, TuringBenchmarks, Stan;
+                              Stan.set_cmdstan_home!(\"$(replace(TuringBenchmarks.CMDSTAN_HOME, "\\"=>"\\\\"))\");
+                              TuringBenchmarks.SEND_SUMMARY[] = false;
+                              include(\"$(replace(filepath, "\\"=>"\\\\"))\")"`
             println(job); run(job)
             println("`$file` ✓")
             @test true

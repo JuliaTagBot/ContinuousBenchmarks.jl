@@ -17,7 +17,7 @@ logd = build_logd("School 8", bench_res...)
 
 # describe(chn)
 
-include(splitdir(Base.@__DIR__)[1]*"/benchmarks/school8-stan.run.jl")
+include(joinpath(TuringBenchmarks.BENCH_DIR, "school8-stan.run.jl"))
 
 logd["stan"] = stan_d
 logd["time_stan"] = get_stan_time("schools8")

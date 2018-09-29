@@ -8,7 +8,7 @@ include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "bernoulli.model.jl"))
 bench_res = @tbenchmark(HMC(10000, 0.25, 5), bermodel, berstandata[1]["y"])
 logd = build_logd("Bernoulli Model", bench_res...)
 
-include(splitdir(Base.@__DIR__)[1]*"/benchmarks/"*"bernoulli-stan.run.jl")
+include(joinpath(TuringBenchmarks.BENCH_DIR, "bernoulli-stan.run.jl"))
 logd["stan"] = Dict("theta" => mean(theta_stan))
 logd["time_stan"] = ber_time
 
