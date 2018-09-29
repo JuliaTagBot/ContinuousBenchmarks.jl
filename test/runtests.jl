@@ -29,7 +29,7 @@ end
 TURING_HOME = joinpath(@__DIR__, "..")
 for (root, dirs, files) in walkdir(TuringBenchmarks.BENCH_DIR)
     for file in files
-        if tobenchmark(file) && !nottoenchmark(file) && splitext(file)[2] == ".jl"
+        if tobenchmark(file) && !nottobenchmark(file) && splitext(file)[2] == ".jl"
             filepath = abspath(joinpath(root, file))
             println("Testing `$file` ... ")
             job = `julia -e " cd(\"$(replace(pwd(), "\\"=>"\\\\"))\"); 

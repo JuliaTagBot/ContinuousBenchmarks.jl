@@ -1,5 +1,5 @@
 using Turing, TuringBenchmarks
-using HDF5, JLD2, FileIO, ProfileView
+using JLD2, FileIO, ProfileView
 
 setadbackend(:reverse_diff)
 turnprogress(false)

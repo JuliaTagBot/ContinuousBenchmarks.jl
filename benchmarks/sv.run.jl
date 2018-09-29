@@ -1,6 +1,6 @@
 using Turing, TuringBenchmarks
 using Mamba: describe
-using HDF5, FileIO, JLD2
+using FileIO, JLD2
 
 include(joinpath(TuringBenchmarks.BENCH_DIR, "sv.model.jl"))
 
