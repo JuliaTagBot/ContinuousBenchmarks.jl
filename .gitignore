@@ -1,0 +1,4 @@
+src/cmdstan_home.jl
+cmdstan/
+deps/build.log
+data/stan-data/ldastandata*
