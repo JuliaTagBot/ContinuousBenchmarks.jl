@@ -1,8 +1,7 @@
 using Turing, TuringBenchmarks
 
-
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "lda-stan.data.jl")
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "lda-stan.model.jl")
+include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "lda-stan.data.jl"))
+include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "lda-stan.model.jl"))
 
 stan_model_name = "LDA"
 # ldastan = Stanmodel(Sample(save_warmup=true), name=stan_model_name, model=ldastanmodel, nchains=1);

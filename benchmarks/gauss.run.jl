@@ -1,14 +1,11 @@
 using Turing, TuringBenchmarks
+using HTTP: get, post, put
 
-using Requests
-import Requests: get, post, put, delete, options, FileParam
+include(joinpath(TuringBenchmarks.DATA_DIR, "toy-data", "gdemo-stan.data.jl"))
+include(joinpath(TuringBenchmarks.BENCH_DIR, "toy-models", "gdemo.model.jl"))
 
-include(joinpath(TuringBenchmarks.DATA_DIR, "toy-data", "gdemo-stan.data.jl")
-include(joinpath(TuringBenchmarks.BENCH_DIR, "toy-models", "gdemo.model.jl")
-
-tbenchmark("HMC(20, 0.1, 3)", "simplegaussmodel", "data=simplegaussstandata[1]")
-
-bench_res = tbenchmark("HMC(2000, 0.1, 3)", "simplegaussmodel", "data=simplegaussstandata[1]")
+@tbenchmark(HMC(20, 0.1, 3), simplegaussmodel, simplegaussstandata[1])
+bench_res = @tbenchmark(HMC(2000, 0.1, 3), simplegaussmodel, simplegaussstandata[1])
 logd = build_logd("Simple Gaussian Model", bench_res...)
 logd["analytic"] = Dict("s" => 49/24, "m" => 7/6)
 

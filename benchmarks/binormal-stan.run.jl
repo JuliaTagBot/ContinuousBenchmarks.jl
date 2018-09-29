@@ -2,7 +2,7 @@ using Turing, TuringBenchmarks
 
 #using Mamba: describe
 
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "binormal-stan.model.jl")
+include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "binormal-stan.model.jl"))
 
 global stanmodel, rc, sim1, sim, stan_time
 # stanmodel = Stanmodel(name="binormal", model=binorm, Sample(save_warmup=true));

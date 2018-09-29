@@ -1,8 +1,8 @@
 using Turing, TuringBenchmarks
 
 
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "MoC-stan.data.jl")
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "MoC-stan.model.jl")
+include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "MoC-stan.data.jl"))
+include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "MoC-stan.model.jl"))
 
 stan_model_name = "Naive_Bayes"
 nbstan = Stanmodel(Sample(algorithm=Stan.Hmc(Stan.Static(0.05),Stan.diag_e(),0.01,0.0),

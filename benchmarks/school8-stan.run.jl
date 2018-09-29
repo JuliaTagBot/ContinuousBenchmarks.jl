@@ -3,8 +3,8 @@ using Turing, TuringBenchmarks
 
 # Model taken from https://github.com/goedman/Stan.jl/blob/master/Examples/Mamba/EightSchools/schools8.jl
 
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "school8-stan.data.jl")
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "school8-stan.model.jl")
+include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "school8-stan.data.jl"))
+include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "school8-stan.model.jl"))
 
 global stanmodel, rc, sim
 # stanmodel = Stanmodel(name="schools8", model=eightschools);

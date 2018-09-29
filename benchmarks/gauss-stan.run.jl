@@ -1,8 +1,8 @@
 using Turing, TuringBenchmarks
 
 
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "bernoulli-stan.data.jl")
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "bernoulli-stan.model.jl")
+include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "bernoulli-stan.data.jl"))
+include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "bernoulli-stan.model.jl"))
 
 include(splitdir(Base.@__DIR__)[1]*"/toy-models/gdemo-stan.data.jl")
 include(splitdir(Base.@__DIR__)[1]*"/toy-models/gdemo-stan.model.jl")

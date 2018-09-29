@@ -1,8 +1,8 @@
 using Turing, TuringBenchmarks
 
 
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "normal-mixture-stan.data.jl")
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "normal-mixture-stan.model.jl")
+include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "normal-mixture-stan.data.jl"))
+include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "normal-mixture-stan.model.jl"))
 
 stan_model_name = "normalmixture"
 simplenormalmixturestan = Stanmodel(name=stan_model_name, model=simplenormalmixturemodel, nchains=1);

@@ -1,4 +1,5 @@
 using Pkg, TuringBenchmarks
+Pkg.add(["FileIO", "JLD2", "Turing"])
 
 TuringBenchmarks.SEND_SUMMARY[] = false
 

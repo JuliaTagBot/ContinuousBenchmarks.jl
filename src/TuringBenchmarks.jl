@@ -1,13 +1,14 @@
 module TuringBenchmarks
 
+using Statistics
+
 export  benchmark_turing,
-        tbenchmark, 
+        @tbenchmark, 
         get_stan_time, 
         build_logd, 
         send_log,
-        print_log,
-        send_str,
-        vis_topic_res
+        print_log
+        #vis_topic_res
 
 # using StatPlots
 # using DataFrames
@@ -46,9 +47,12 @@ function get_stan_time(stan_model_name::String)
 end
 
 # Run benchmark
-function tbenchmark(alg::String, model::String, data::String)
-    chain, _, mem, _, _  = eval(parse("model_f = $model($data); @timed sample(model_f, $alg)"))
-    alg, sum(chain[:elapsed]), mem, chain, deepcopy(chain)
+macro tbenchmark(alg, model, data)
+    esc(quote
+        model_f = $model($data)
+        chain, _, mem, _, _  = @timed sample(model_f, $alg)
+        $(string(alg)), sum(chain[:elapsed]), mem, chain, deepcopy(chain)
+    end)
 end
 
 # Build logd from Turing chain
@@ -124,8 +128,6 @@ end
 print_log(logd::Dict, monitor=[]) = print(log2str(logd, monitor))
 
 function send_log(logd::Dict, monitor=[])
-    # log_str = log2str(logd, monitor)
-    # send_str(log_str, logd["name"])
     dir_old = pwd()
     cd(splitdir(Base.@__DIR__)[1])
     commit_str = replace(split(readstring(pipeline(`git show --summary `, `grep "commit"`)), " ")[2], "\n", "")
@@ -137,19 +139,6 @@ function send_log(logd::Dict, monitor=[])
         post("https://api.mlab.com/api/1/databases/benchmark/collections/log?apiKey=Hak1H9--KFJz7aAx2rAbNNgub1KEylgN"; json=logd)
     end
 end
-
-function send_str(str::String, fname::String)
-    dir_old = pwd()
-    cd(splitdir(Base.@__DIR__)[1])
-    commit_str = replace(split(readstring(pipeline(`git show --summary `, `grep "commit"`)), " ")[2], "\n", "")
-    cd(dir_old)
-    time_str = "$(Dates.format(now(), "dd-u-yyyy-HH-MM-SS"))"
-    post("http://80.85.86.210:1110"; files = [FileParam(str, "text","upfile","benchmark-$time_str-$commit_str-$fname.txt")])
-end
-
-# using Requests
-# import Requests: get, post, put, delete, options, FileParam
-# import JSON
 
 function gen_mkd_table_for_commit(commit)
     # commit = "f4ca7bfc8a63e5a6825ec272e7dffed7be623b31"

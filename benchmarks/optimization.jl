@@ -2,9 +2,6 @@ using Turing, TuringBenchmarks
 using Turing: VarName, insdelim, varname, @VarName
 using ForwardDiff: Dual
 
-# using Requests
-# import Requests: get, post, put, delete, options, FileParam
-
 optRes = ">>> Runtime of ? for 1000 times <<<\n"
 optRes *= "Pure function with symbol    : "
 
@@ -84,8 +81,8 @@ optRes *= ">>> Pre-allocation? <<<\n"
 
 optRes *= "LDA (normal): "
 
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "lda-stan.data.jl")
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "lda.model.jl")
+include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "lda-stan.data.jl"))
+include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "lda.model.jl"))
 
 run_total = 5
 
@@ -107,8 +104,8 @@ optRes *= "$ts, mean=$(mean(ts)), var=$(var(ts))\n"
 
 optRes *= "MoC (normal): "
 
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "MoC-stan.data.jl")
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "MoC.model.jl")
+include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "MoC-stan.data.jl"))
+include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "MoC.model.jl"))
 
 ts2 = Float64[]
 
@@ -244,5 +241,3 @@ dps = SEEDS[11]
 t_dualnumbers = @elapsed for _ = 1:(44*2000*5) ForwardDiff.Dual{Void, Float64, 44}(1.1, dps) end
 
 optRes *= "44*2000*5 times: $t_dualnumbers\n"
-
-# send_str(optRes, "optimization")

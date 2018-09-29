@@ -1,8 +1,7 @@
 using Turing, TuringBenchmarks
 
-
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "bernoulli-stan.data.jl")
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "bernoulli-stan.model.jl")
+include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "bernoulli-stan.data.jl"))
+include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "bernoulli-stan.model.jl"))
 
 stan_model_name = "bernoulli"
 berstan = Stanmodel(name=stan_model_name, model=berstanmodel, nchains=1);

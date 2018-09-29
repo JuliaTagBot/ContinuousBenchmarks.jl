@@ -2,9 +2,7 @@
 
 using Turing, TuringBenchmarks
 using Mamba: describe
-
-using Requests
-import Requests: get, post, put, delete, options, FileParam
+using HTTP: get, post, put
 
 const kid = "
 data {
@@ -201,8 +199,8 @@ using Turing
 end
 
 # chn = sample(kid_turing(data=kiddata[1]), HMC(2000, 0.0025, 10))
-tbenchmark("HMC(20, 0.0025, 10)", "kid_turing", "data=kiddata[1]")
-bench_res = tbenchmark("HMC(2000, 0.0025, 10)", "kid_turing", "data=kiddata[1]")
+@tbenchmark(HMC(20, 0.0025, 10), kid_turing, kiddata[1])
+bench_res = @tbenchmark(HMC(2000, 0.0025, 10), kid_turing, kiddata[1])
 chn = bench_res[4]
 logd = build_logd("Kid", bench_res...)
 # println("Test: 25.0 < mean(chn[:(beta[1])]) == $(mean(chn[:(beta[1])])) < 27.0 ?")
