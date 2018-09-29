@@ -18,5 +18,4 @@ logd["stan"] = stan_d
 logd["time_stan"] = nb_time
 
 print_log(logd)
-
-send_log(logd)
+#send_log(logd)

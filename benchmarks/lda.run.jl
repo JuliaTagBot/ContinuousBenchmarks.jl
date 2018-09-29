@@ -27,5 +27,5 @@ for (modelc, modeln) in zip([
   logd["stan"] = lda_stan_d
   logd["time_stan"] = lda_time
   print_log(logd)
-  send_log(logd)
+  #send_log(logd)
 end

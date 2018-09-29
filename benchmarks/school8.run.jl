@@ -23,5 +23,4 @@ logd["stan"] = stan_d
 logd["time_stan"] = get_stan_time("schools8")
 
 print_log(logd)
-
-send_log(logd)
+#send_log(logd)

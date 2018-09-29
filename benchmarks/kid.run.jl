@@ -220,4 +220,4 @@ logd["time_stan"] = get_stan_time("kid")
 logd["note"] = "With static setting, Stan sometimes gives error: \"Exception: normal_lpdf: Scale parameter is nan, but must be > 0!\""
 
 print_log(logd)
-send_log(logd)
+#send_log(logd)

@@ -31,4 +31,5 @@ logd["time_stan"] = get_stan_time("binormal")
 # println("Stan time  : $stan_time")
 # println("Turing time: $turing_time")
 
-send_log(logd)
+print_log(logd)
+#send_log(logd)
