@@ -1,16 +1,6 @@
 using TuringBenchmarks
 using Test
 
-function tobenchmark(filename)
-    #filenames_to_bench = ["bernoulli.run.jl"]
-    filenames_to_bench = ["bernoulli.run.jl"]
-    if filename ∈ filenames_to_bench
-        return true
-    else
-        return false
-    end
-end
-
 mamba_benchmarks = ["binomial.run.jl", 
                     "dyes.run.jl", 
                     "gdemo-gewke.run.jl", 
@@ -18,18 +8,23 @@ mamba_benchmarks = ["binomial.run.jl",
                     "school8.run.jl", 
                     "sv.run.jl"]
 
-function nottobenchmark(filename)
+#files_to_bench = ["bernoulli.run.jl"]
+files_to_bench = ["bernoulli.run.jl"]
+
+function tobenchmark(filename)
     if filename ∈ mamba_benchmarks
         return false
-    else
+    elseif filename ∈ files_to_bench
         return true
+    else
+        return false
     end
 end
 
 TURING_HOME = joinpath(@__DIR__, "..")
 for (root, dirs, files) in walkdir(TuringBenchmarks.BENCH_DIR)
     for file in files
-        if tobenchmark(file) && !nottobenchmark(file) && splitext(file)[2] == ".jl"
+        if tobenchmark(file) && splitext(file)[2] == ".jl"
             filepath = abspath(joinpath(root, file))
             println("Testing `$file` ... ")
             job = `julia -e " cd(\"$(replace(pwd(), "\\"=>"\\\\"))\"); 
