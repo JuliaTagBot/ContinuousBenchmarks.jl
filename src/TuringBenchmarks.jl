@@ -48,7 +48,7 @@ function get_stan_time(stan_model_name::String)
     s = readlines(pwd()*"/tmp/$(stan_model_name)_samples_1.csv")
     println(s[end-1])
     m = match(r"(?<time>[0-9]+.[0-9]*)", s[end-1])
-    float(m[:time])
+    parse(Float64, m[:time])
 end
 
 # Run benchmark
