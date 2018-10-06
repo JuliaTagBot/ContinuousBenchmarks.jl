@@ -1,5 +1,7 @@
 module TuringBenchmarks
 
+__precompile__(false)
+
 using Statistics
 
 export  benchmark_models,
@@ -15,16 +17,17 @@ export  benchmark_models,
 # using StatPlots
 # using DataFrames
 
-const MODELS_DIR = joinpath(@__DIR__, "..", "models")
-const STAN_MODELS_DIR = joinpath(MODELS_DIR, "stan-models")
+const MODELS_DIR = abspath(joinpath(@__DIR__, "..", "models"))
+const STAN_MODELS_DIR = abspath(joinpath(MODELS_DIR, "stan-models"))
 
-const DATA_DIR = joinpath(@__DIR__, "..", "data")
-const STAN_DATA_DIR = joinpath(DATA_DIR, "stan-data")
+const DATA_DIR = abspath(joinpath(@__DIR__, "..", "data"))
+const STAN_DATA_DIR = abspath(joinpath(DATA_DIR, "stan-data"))
 
-const BENCH_DIR = joinpath(@__DIR__, "..", "benchmarks")
-const SIMULATIONS_DIR = joinpath(@__DIR__, "..", "simulations")
+const BENCH_DIR = abspath(joinpath(@__DIR__, "..", "benchmarks"))
+const SIMULATIONS_DIR = abspath(joinpath(@__DIR__, "..", "simulations"))
 
-const CMDSTAN_HOME = joinpath(@__DIR__, "..", "cmdstan")
+include("cmdstan_home.jl")
+const CMDSTAN_HOME = cmdstan_home()
 
 const SEND_SUMMARY = Ref(true)
 
