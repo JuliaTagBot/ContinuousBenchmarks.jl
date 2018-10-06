@@ -185,21 +185,29 @@ end
 
 function _benchmark_model(modelname; send = true)
     println("Benchmarking `$modelname` ... ")
-    filepath = getbenchpath(modelname)
-    _benchmark_file(filepath, send=send, status = false)
+    _benchmark_file(modelname, send=send, status = false, model = true)
     println("`$modelname` ✓")
     return 
 end
 
 getbenchpath(modelname) = joinpath(TuringBenchmarks.BENCH_DIR, "$(modelname).run.jl")
 
-function _benchmark_file(filepath; send = true, status = false)
-    status && println("Benchmarking `$filepath` ... ")
+function _benchmark_file(fileormodel; send = true, status = false, model = false)
+    if model
+        filepath = getbenchpath(fileormodel)
+    else
+        filepath = file
+        status && println("Benchmarking `$filepath` ... ")
+    end
+    julia_path = joinpath(Sys.BINDIR, Base.julia_exename())
     send_code = send ? "TuringBenchmarks.SEND_SUMMARY[] = false;" : ""
-    job = `julia -e "   using Turing, TuringBenchmarks, Stan;
-                        Stan.set_cmdstan_home!(\"$(replace(TuringBenchmarks.CMDSTAN_HOME, "\\"=>"\\\\"))\");
-                        $send_code
-                        include(\"$(replace(filepath, "\\"=>"\\\\"))\")"`
+    include_arg = model ? "TuringBenchmarks.getbenchpath(\"$fileormodel\")" : "\"$(replace(filepath, "\\"=>"\\\\"))\""
+
+    job = `$julia_path -e
+                "using Turing, TuringBenchmarks, Stan;
+                Stan.set_cmdstan_home!(TuringBenchmarks.CMDSTAN_HOME);
+                $send_code
+                include($include_arg);"`
     println(job); run(job)
     status && println("`$filepath` ✓")
     return 
