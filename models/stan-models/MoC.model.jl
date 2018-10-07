@@ -2,7 +2,7 @@
 # Reference: http://mlg.eng.cam.ac.uk/teaching/4f13/1617/document%20models.pdf
 @model nbmodel(K, V, M, N, z, w, doc, alpha, beta) = begin
   theta ~ Dirichlet(alpha)
-  phi = Array{Any}(K)
+  phi = TArray{Any}(K)
   for k = 1:K
     phi[k] ~ Dirichlet(beta)
   end

@@ -14,11 +14,10 @@ model {
 }
 "
 
-@model negbinmodel(y) begin
+@model negbinmodel(y) = begin
   α ~ Cauchy(0,10)
   β ~ Cauchy(0,10)
   for i = 1:length(y)
     y[i] ~ NegativeBinomial(α, β)  # α > 0, 0 < β < 1
   end
-  return(α, β)
 end

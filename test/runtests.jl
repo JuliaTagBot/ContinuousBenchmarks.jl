@@ -1,13 +1,23 @@
 using TuringBenchmarks
 using Test
 
-files_to_bench = ["binormal.run.jl"]
+broken_benchmarks = [# Errors
+	                "dyes.run.jl",
+                	"kid.run.jl",
+                	"negative_binomial.run.jl",
+	                "normal_mixture.run.jl",
+                    "school8.run.jl",
+                    "binomial.run.jl",
+                    "sv.run.jl",
+                    # Freezes
+                	"lda.run.jl"]
+
 
 function tobenchmark(filename)
-    if filename ∈ files_to_bench
-        return true
-    else
+    if filename ∈ broken_benchmarks
         return false
+    else
+        return true
     end
 end
 

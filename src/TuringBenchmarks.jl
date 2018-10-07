@@ -94,27 +94,29 @@ function log2str(logd::Dict, monitor=[])
         for (v, m) = logd["turing"]
             if isempty(monitor) || v in monitor
                 str *= ("| >> $v <<") * "\n"
-                str *= ("| mean = $(round(m, digits=3))") * "\n"
+                str *= ("| mean = $(round.(m, digits=3))") * "\n"
                 if haskey(logd, "analytic") && haskey(logd["analytic"], v)
                     str *= ("|   -> analytic = $(round(logd["analytic"][v], digits=3)), ")
-                    diff = abs(m - logd["analytic"][v])
+                    diff = abs.(m - logd["analytic"][v])
                     diff_output = "diff = $(round(diff, digits=3))"
                     if sum(diff) > 0.2
                         # TODO: try to fix this
-                        print_with_color(:red, diff_output*"\n")
+                        #print_with_color(:red, diff_output*"\n")
+                        print(diff_output*"\n")
                         str *= (diff_output) * "\n"
                     else
                         str *= (diff_output) * "\n"
                     end
                 end
                 if haskey(logd, "stan") && haskey(logd["stan"], v)
-                    str *= ("|   -> Stan     = $(round(logd["stan"][v], digits=3)), ")
+                    str *= ("|   -> Stan     = $(round.(logd["stan"][v], digits=3)), ")
                     println(m, logd["stan"][v])
-                    diff = abs(m - logd["stan"][v])
-                    diff_output = "diff = $(round(diff, digits=3))"
+                    diff = abs.(m - logd["stan"][v])
+                    diff_output = "diff = $(round.(diff, digits=3))"
                     if sum(diff) > 0.2
                         # TODO: try to fix this
-                        print_with_color(:red, diff_output*"\n")
+                        #print_with_color(:red, diff_output*"\n")
+                        print(diff_output*"\n")
                         str *= (diff_output) * "\n"
                     else
                         str *= (diff_output) * "\n"

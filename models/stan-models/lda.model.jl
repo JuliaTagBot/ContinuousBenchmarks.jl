@@ -84,10 +84,10 @@ end
 
 
 @model ldamodel_vec(K, V, M, N, w, doc, beta, alpha) = begin
-  theta = Matrix{Real}(K, M)
+  theta = Matrix{Real}(undef, K, M)
   theta ~ [Dirichlet(alpha)]
 
-  phi = Matrix{Real}(V, K)
+  phi = Matrix{Real}(undef, V, K)
   phi ~ [Dirichlet(beta)]
 
   phi_dot_theta = log.(phi * theta)
