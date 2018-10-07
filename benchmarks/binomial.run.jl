@@ -37,7 +37,7 @@ const binomialdata = [
   Dict("n" => 10, "k" => 5)
 ]
 
-rc, sim = stan(stanmodel, binomialdata, CmdStanDir=CMDSTAN_HOME, summary=false)
+rc, sim = stan(stanmodel, binomialdata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
 
 describe(sim)
 
@@ -47,6 +47,6 @@ describe(sim)
   k ~ Binomial(n, theta)
 end
 
-chn = sample(binomial_turing(data=binomialdata[1]), HMC(2000, 0.75, 5))
+chn = sample(binomial_turing(binomialdata[1]["n"], binomialdata[1]["k"]), HMC(2000, 0.75, 5))
 
 descibe(chn)

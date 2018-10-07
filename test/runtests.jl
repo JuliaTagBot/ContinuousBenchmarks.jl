@@ -1,20 +1,10 @@
 using TuringBenchmarks
 using Test
 
-mamba_benchmarks = ["binomial.run.jl", 
-                    "dyes.run.jl", 
-                    "gdemo-gewke.run.jl", 
-                    "kid.run.jl", 
-                    "school8.run.jl", 
-                    "sv.run.jl"]
-
-#files_to_bench = ["bernoulli.run.jl"]
-files_to_bench = ["bernoulli.run.jl"]
+files_to_bench = ["binormal.run.jl"]
 
 function tobenchmark(filename)
-    if filename ∈ mamba_benchmarks
-        return false
-    elseif filename ∈ files_to_bench
+    if filename ∈ files_to_bench
         return true
     else
         return false

@@ -1,15 +1,15 @@
 # https://github.com/goedman/Stan.jl/blob/master/Examples/Mamba/Binormal/binormal.jl
 
 using Turing, TuringBenchmarks
-using HTTP: get, post, put
 
 include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "binormal-stan.model.jl"))
+include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "binormal.model.jl"))
 
 @tbenchmark(HMC(20, 0.5, 5), binormal, ())
 bench_res = @tbenchmark(HMC(2000, 0.5, 5), binormal, ())
-# chn = sample(binormal(), HMC(2000,0.5,5))
+chn = sample(binormal(), HMC(2000,0.5,5))
 
-# describe(chn)
+describe(chn)
 
 # turing_time = sum(chn[:elapsed])
 

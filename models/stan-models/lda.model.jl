@@ -30,24 +30,24 @@
 # V = ldastandata[1]["V"]
 # K = ldastandata[1]["K"]
 # M = ldastandata[1]["M"]
-# theta = Vector{Vector{Real}}(M)
+# theta = Vector{Vector{Real}}(undef, M)
 # for m = 1:M
-#   theta[m] = Vector{Real}(K)
+#   theta[m] = Vector{Real}(undef, K)
 # end
-# phi = Vector{Vector{Real}}(K)
+# phi = Vector{Vector{Real}}(undef, K)
 # for k = 1:K
-#   phi[k] = Vector{Real}(V)
+#   phi[k] = Vector{Real}(undef, V)
 # end
 
-# phi_dot_theta = [Vector{Real}(V) for m=1:M]
+# phi_dot_theta = [Vector{Real}(undef, V) for m=1:M]
 
 @model ldamodel(K, V, M, N, w, doc, beta, alpha) = begin
-  theta = Vector{Vector{Real}}(M)
+  theta = TArray{Vector{Real}, 1}(M)
   @simd for m = 1:M
     @inbounds theta[m] ~ Dirichlet(alpha)
   end
 
-  phi = Vector{Vector{Real}}(K)
+  phi = TArray{Vector{Real}, 1}(K)
   @simd for k = 1:K
     @inbounds phi[k] ~ Dirichlet(beta)
   end

@@ -1,8 +1,7 @@
 # NOTE: Stan codes are copied from https://github.com/goedman/Stan.jl/blob/master/Examples/NoMamba/ARM/Ch03/Kid/kidscore.jl
 
-using Turing, TuringBenchmarks
+using Turing, TuringBenchmarks, Stan
 using Mamba: describe
-using HTTP: get, post, put
 
 const kid = "
 data {
@@ -183,7 +182,7 @@ stanmodel = Stanmodel(Sample(algorithm=Stan.Hmc(Stan.Static(0.005*10), Stan.diag
   save_warmup=true, adapt=Stan.Adapt(engaged=false)),
   num_samples=2000, num_warmup=0, thin=1,
   name="kid", model=kid, nchains=1);
-rc, sim = stan(stanmodel, kiddata, CmdStanDir=CMDSTAN_HOME, summary=false)
+rc, sim = stan(stanmodel, kiddata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
 
 # if rc == 0
 #   println("Test: 25.0 < round(mean(beta[1]), 0) == $(mean(sim[:,8,:])) < 27.0 ?")
@@ -193,13 +192,14 @@ using Turing
 
 @model kid_turing(N, kid_score, mom_hs, mom_iq) = begin
   sigma ~ FlatPos(0)
-  beta = Vector{Real}(3)
+  beta = Vector{Real}(undef, 3)
   beta ~ [Flat()]
   kid_score ~ MvNormal(beta[1] .+ beta[2] .* mom_hs .+ beta[3] .* mom_iq, sigma .* ones(N));
 end
 
 # chn = sample(kid_turing(data=kiddata[1]), HMC(2000, 0.0025, 10))
-@tbenchmark(HMC(20, 0.0025, 10), kid_turing, kiddata[1])
+data = map(ind -> kiddata[1][ind], ["N", "kid_score", "mom_hs", "mom_iq"])
+@tbenchmark(HMC(20, 0.0025, 10), kid_turing, (data...))
 bench_res = @tbenchmark(HMC(2000, 0.0025, 10), kid_turing, kiddata[1])
 chn = bench_res[4]
 logd = build_logd("Kid", bench_res...)

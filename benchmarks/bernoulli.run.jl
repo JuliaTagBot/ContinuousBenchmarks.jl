@@ -1,5 +1,4 @@
 using Turing, TuringBenchmarks
-using HTTP: get, post, put
 
 include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "bernoulli-stan.data.jl"))
 include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "bernoulli.model.jl"))

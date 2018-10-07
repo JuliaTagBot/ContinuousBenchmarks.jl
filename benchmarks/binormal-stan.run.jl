@@ -12,7 +12,7 @@ stanmodel = Stanmodel(Sample(algorithm=Stan.Hmc(Stan.Static(0.5*5),Stan.diag_e()
   num_samples=2000, num_warmup=0, thin=1,
   name="binormal", model=binorm, nchains=1);
 
-rc, sim1 = stan(stanmodel, CmdStanDir=CMDSTAN_HOME, summary=false)
+rc, sim1 = stan(stanmodel, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
 
 if rc == 0
   ## Subset Sampler Output

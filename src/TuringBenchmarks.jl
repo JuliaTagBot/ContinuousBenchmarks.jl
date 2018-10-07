@@ -53,8 +53,10 @@ end
 
 # Run benchmark
 macro tbenchmark(alg, model, data)
+    model = :(($model isa String ? eval(Meta.parse($model)) : $model))
+    model_dfn = data isa Expr && data.head == :tuple ? :(model_f = $model($(data)...)) : model_f = :(model_f = $model($data))
     esc(quote
-        model_f = $model($data)
+        $model_dfn
         chain, _, mem, _, _  = @timed sample(model_f, $alg)
         $(string(alg)), sum(chain[:elapsed]), mem, chain, deepcopy(chain)
     end)
@@ -92,11 +94,11 @@ function log2str(logd::Dict, monitor=[])
         for (v, m) = logd["turing"]
             if isempty(monitor) || v in monitor
                 str *= ("| >> $v <<") * "\n"
-                str *= ("| mean = $(round(m, 3))") * "\n"
+                str *= ("| mean = $(round(m, digits=3))") * "\n"
                 if haskey(logd, "analytic") && haskey(logd["analytic"], v)
-                    str *= ("|   -> analytic = $(round(logd["analytic"][v], 3)), ")
+                    str *= ("|   -> analytic = $(round(logd["analytic"][v], digits=3)), ")
                     diff = abs(m - logd["analytic"][v])
-                    diff_output = "diff = $(round(diff, 3))"
+                    diff_output = "diff = $(round(diff, digits=3))"
                     if sum(diff) > 0.2
                         # TODO: try to fix this
                         print_with_color(:red, diff_output*"\n")
@@ -106,10 +108,10 @@ function log2str(logd::Dict, monitor=[])
                     end
                 end
                 if haskey(logd, "stan") && haskey(logd["stan"], v)
-                    str *= ("|   -> Stan     = $(round(logd["stan"][v], 3)), ")
+                    str *= ("|   -> Stan     = $(round(logd["stan"][v], digits=3)), ")
                     println(m, logd["stan"][v])
                     diff = abs(m - logd["stan"][v])
-                    diff_output = "diff = $(round(diff, 3))"
+                    diff_output = "diff = $(round(diff, digits=3))"
                     if sum(diff) > 0.2
                         # TODO: try to fix this
                         print_with_color(:red, diff_output*"\n")
@@ -160,7 +162,7 @@ function gen_mkd_table_for_commit(commit)
         modelName = log["name"]
         tt, ts = log["time"], log["time_stan"]
         rt = tt / ts
-        tt, ts, rt = round(tt, 2), round(ts, 2), round(rt, 2)
+        tt, ts, rt = round(tt, digits=2), round(ts, digits=2), round(rt, digits=2)
         mkd *= "|$modelName|$tt|$ts|$rt|\n"
     end
 
@@ -185,23 +187,23 @@ end
 
 function _benchmark_model(modelname; send = true)
     println("Benchmarking `$modelname` ... ")
-    _benchmark_file(modelname, send=send, status = false, model = true)
+    _benchmark_file(modelname, send=send, model = true)
     println("`$modelname` ✓")
     return 
 end
 
 getbenchpath(modelname) = joinpath(TuringBenchmarks.BENCH_DIR, "$(modelname).run.jl")
 
-function _benchmark_file(fileormodel; send = true, status = false, model = false)
+function _benchmark_file(fileormodel; send = true, model = false)
     if model
-        filepath = getbenchpath(fileormodel)
+        include_arg = "TuringBenchmarks.getbenchpath(\"$fileormodel\")"
     else
-        filepath = file
-        status && println("Benchmarking `$filepath` ... ")
+        filepath = fileormodel
+        println("Benchmarking `$filepath` ... ")
+        include_arg = "\"$(replace(filepath, "\\"=>"\\\\"))\""
     end
     julia_path = joinpath(Sys.BINDIR, Base.julia_exename())
     send_code = send ? "TuringBenchmarks.SEND_SUMMARY[] = false;" : ""
-    include_arg = model ? "TuringBenchmarks.getbenchpath(\"$fileormodel\")" : "\"$(replace(filepath, "\\"=>"\\\\"))\""
 
     job = `$julia_path -e
                 "using Turing, TuringBenchmarks, Stan;
@@ -209,7 +211,7 @@ function _benchmark_file(fileormodel; send = true, status = false, model = false
                 $send_code
                 include($include_arg);"`
     println(job); run(job)
-    status && println("`$filepath` ✓")
+    !model && println("`$filepath` ✓")
     return 
 end
 

@@ -13,7 +13,7 @@ stanmodel = Stanmodel(Sample(algorithm=Stan.Hmc(Stan.Static(0.75*5),Stan.diag_e(
   num_samples=2000, num_warmup=0, thin=1,
   name="schools8", model=eightschools, nchains=1);
 
-rc, sim = stan(stanmodel, schools8data, CmdStanDir=CMDSTAN_HOME, summary=false)
+rc, sim = stan(stanmodel, schools8data, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
 
 stan_d = Dict()
 
