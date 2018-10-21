@@ -5,10 +5,13 @@ broken_benchmarks = [# Errors
 	                "dyes.run.jl",
                 	"kid.run.jl",
                 	"negative_binomial.run.jl",
-	                "normal_mixture.run.jl",
+	                "normal-mixture.run.jl",
                     "school8.run.jl",
                     "binomial.run.jl",
                     "sv.run.jl",
+                    #"MoC.run.jl",
+                    #"optimization.jl",
+                    #"profile.jl",
                     # Freezes
                 	"lda.run.jl"]
 

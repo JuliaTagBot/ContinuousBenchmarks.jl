@@ -1,4 +1,4 @@
-using Turing, TuringBenchmarks, Stan
+using Stan, Turing, TuringBenchmarks
 using Mamba: describe
 
 const dyes ="

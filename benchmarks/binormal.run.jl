@@ -1,6 +1,6 @@
 # https://github.com/goedman/Stan.jl/blob/master/Examples/Mamba/Binormal/binormal.jl
 
-using Turing, TuringBenchmarks
+using Stan, Turing, TuringBenchmarks
 
 include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "binormal-stan.model.jl"))
 include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "binormal.model.jl"))

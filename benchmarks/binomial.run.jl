@@ -1,4 +1,4 @@
-using Turing, TuringBenchmarks
+using Stan, Turing, TuringBenchmarks
 
 using Mamba: describe
 

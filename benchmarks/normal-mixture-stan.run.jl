@@ -1,4 +1,4 @@
-using Turing, TuringBenchmarks, Stan
+using Stan, Turing, TuringBenchmarks
 
 
 include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "normal-mixture-stan.data.jl"))

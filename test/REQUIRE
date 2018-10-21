@@ -5,5 +5,5 @@ UnicodePlots
 StatsBase
 JLD2
 FileIO
-HTTP
 Stan
+ProfileView

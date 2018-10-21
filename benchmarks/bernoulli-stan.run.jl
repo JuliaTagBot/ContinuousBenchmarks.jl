@@ -1,5 +1,4 @@
-using Turing, TuringBenchmarks, MCMCChain
-using Stan
+using Stan, Turing, TuringBenchmarks, MCMCChain
 
 include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "bernoulli-stan.data.jl"))
 include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "bernoulli-stan.model.jl"))

@@ -1,6 +1,6 @@
 # NOTE: Stan codes are copied from https://github.com/goedman/Stan.jl/blob/master/Examples/NoMamba/ARM/Ch03/Kid/kidscore.jl
 
-using Turing, TuringBenchmarks, Stan
+using Stan, Turing, TuringBenchmarks
 using Mamba: describe
 
 const kid = "

@@ -1,5 +1,4 @@
-using Turing, TuringBenchmarks
-using Stan
+using Stan, Turing, TuringBenchmarks
 
 include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "MoC-stan.data.jl"))
 include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "MoC-stan.model.jl"))

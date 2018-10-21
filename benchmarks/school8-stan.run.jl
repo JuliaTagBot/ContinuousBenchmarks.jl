@@ -1,5 +1,4 @@
-using Turing, TuringBenchmarks
-using Stan
+using Stan, Turing, TuringBenchmarks
 
 # Model taken from https://github.com/goedman/Stan.jl/blob/master/Examples/Mamba/EightSchools/schools8.jl
 

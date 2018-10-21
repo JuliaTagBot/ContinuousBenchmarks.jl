@@ -1,4 +1,4 @@
-using TuringBenchmarks, HDF5, FileIO, JLD2
+using TuringBenchmarks, FileIO, JLD2
 
 # const ldastandata = [
 # Dict(
