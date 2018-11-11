@@ -8,13 +8,14 @@ broken_benchmarks = [# Errors
 	                "normal-mixture.run.jl",
                     "school8.run.jl",
                     "binomial.run.jl",
+                    "MoC.run.jl",
                     "sv.run.jl",
                     # Freezes
                 	"lda.run.jl"]
 
 
 function tobenchmark(filename)
-    if filename ∈ broken_benchmarks
+    if filename ∈ broken_benchmarks || occursin("stan", filename)
         return false
     else
         return true

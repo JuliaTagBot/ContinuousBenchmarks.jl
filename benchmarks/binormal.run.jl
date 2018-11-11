@@ -23,7 +23,7 @@ logd = Dict(
 
 # logd = build_logd("Binormal: sampling from the prior", bench_res...)
 
-include(joinpath(TuringBenchmarks.BENCH_DIR, "binormal-stan.run.jl"))
+#include(joinpath(TuringBenchmarks.BENCH_DIR, "binormal-stan.run.jl"))
 
 # logd["stan"] = Dict("s" => mean(s_stan), "m" => mean(m_stan))
 logd["time_stan"] = get_stan_time("binormal")
@@ -32,4 +32,4 @@ logd["time_stan"] = get_stan_time("binormal")
 # println("Turing time: $turing_time")
 
 print_log(logd)
-#send_log(logd)
+send_log(logd)

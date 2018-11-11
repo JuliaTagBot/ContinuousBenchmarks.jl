@@ -27,19 +27,19 @@ generated quantities {
 }
 "
 
-global stanmodel, rc, sim
-stanmodel = Stanmodel(Sample(algorithm=CmdStan.Hmc(CmdStan.Static(0.75 * 5), CmdStan.diag_e(), 0.75, 0.0),
-  save_warmup=true, adapt=CmdStan.Adapt(engaged=false)),
-  num_samples=2000, num_warmup=0, thin=1,
-  name="binomial", model=binomialstanmodel, nchains=1);
+#global stanmodel, rc, sim
+#stanmodel = Stanmodel(Sample(algorithm=CmdStan.Hmc(CmdStan.Static(0.75 * 5), CmdStan.diag_e(), 0.75, 0.0),
+#  save_warmup=true, adapt=CmdStan.Adapt(engaged=false)),
+#  num_samples=2000, num_warmup=0, thin=1,
+#  name="binomial", model=binomialstanmodel, nchains=1);
 
 const binomialdata = [
   Dict("n" => 10, "k" => 5)
 ]
 
-rc, sim = stan(stanmodel, binomialdata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
+#rc, sim = stan(stanmodel, binomialdata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
 
-describe(sim)
+#describe(sim)
 
 @model binomial_turing(n, k) = begin
   theta ~ Beta(1, 1)

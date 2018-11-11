@@ -2,7 +2,7 @@ module TuringBenchmarks
 
 __precompile__(false)
 
-using Statistics
+using Statistics, Dates
 
 export  benchmark_models,
         benchmark_files,
@@ -139,7 +139,7 @@ print_log(logd::Dict, monitor=[]) = print(log2str(logd, monitor))
 function send_log(logd::Dict, monitor=[])
     dir_old = pwd()
     cd(splitdir(Base.@__DIR__)[1])
-    commit_str = replace(split(readstring(pipeline(`git show --summary `, `grep "commit"`)), " ")[2], "\n", "")
+    commit_str = replace(split(read(pipeline(`git show --summary `, `grep "commit"`), String), " ")[2], "\n"=>"")
     cd(dir_old)
     time_str = "$(Dates.format(now(), "dd-u-yyyy-HH-MM-SS"))"
     logd["created"] = time_str
@@ -155,7 +155,7 @@ function gen_mkd_table_for_commit(commit)
     res = get(api_url)
     # print(res)
 
-    json = JSON.parse(readstring(res))
+    json = JSON.parse(read(res, String))
     # json[1]
 
     mkd  = "| Model | Turing | Stan | Ratio |\n"

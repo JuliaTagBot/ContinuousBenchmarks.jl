@@ -17,10 +17,10 @@ logd = build_logd("School 8", bench_res...)
 
 # describe(chn)
 
-include(joinpath(TuringBenchmarks.BENCH_DIR, "school8-stan.run.jl"))
+#include(joinpath(TuringBenchmarks.BENCH_DIR, "school8-stan.run.jl"))
 
-logd["stan"] = stan_d
-logd["time_stan"] = get_stan_time("schools8")
+#logd["stan"] = stan_d
+#logd["time_stan"] = get_stan_time("schools8")
 
 print_log(logd)
-#send_log(logd)
+send_log(logd)

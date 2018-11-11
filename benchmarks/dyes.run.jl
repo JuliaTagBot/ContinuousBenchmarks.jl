@@ -51,16 +51,16 @@ const dyesdata = [
   )
 ]
 
-global stanmodel, rc, sim
+#global stanmodel, rc, sim
 
-stanmodel = Stanmodel(Sample(algorithm=CmdStan.Hmc(CmdStan.Static(0.38 * 11), CmdStan.diag_e(), 0.38, 0.0),
-  save_warmup=true, adapt=CmdStan.Adapt(engaged=false)),
-  num_samples=2000, num_warmup=0, thin=1,
-  name="dyes", model=dyes, nchains=1);
-rc, sim = stan(stanmodel, dyesdata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
+#stanmodel = Stanmodel(Sample(algorithm=CmdStan.Hmc(CmdStan.Static(0.38 * 11), CmdStan.diag_e(), 0.38, 0.0),
+#  save_warmup=true, adapt=CmdStan.Adapt(engaged=false)),
+#  num_samples=2000, num_warmup=0, thin=1,
+#  name="dyes", model=dyes, nchains=1);
+#rc, sim = stan(stanmodel, dyesdata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
 
-stanmodel = Stanmodel(name="dyes", model=dyes, useMamba=false)
-rc, sim = stan(stanmodel, dyesdata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME)
+#stanmodel = Stanmodel(name="dyes", model=dyes, useMamba=false)
+#rc, sim = stan(stanmodel, dyesdata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME)
 
 @model dyes_turing(BATCHES, SAMPLES, y) = begin
   theta ~ Normal(0.0, 1E5)
