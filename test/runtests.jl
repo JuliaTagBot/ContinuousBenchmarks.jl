@@ -1,8 +1,8 @@
 using Pkg
 
+Pkg.develop("Turing")
 shas_filepath = abspath(joinpath("..", "src", "bench_shas.txt"))
 if isfile(shas_filepath) && length(readlines(shas_filepath)) > 0
-    Pkg.develop("Turing")
     function getturingpath()
         splitdir(splitdir(readchomp(`julia -e "using Turing; println(pathof(Turing))"`))[1])[1]
     end
