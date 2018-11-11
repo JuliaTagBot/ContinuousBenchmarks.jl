@@ -10,6 +10,7 @@ broken_benchmarks = [# Errors
                     "binomial.run.jl",
                     "MoC.run.jl",
                     "sv.run.jl",
+                    "gdemo-geweke.run.jl",
                     # Freezes
                 	"lda.run.jl"]
 
