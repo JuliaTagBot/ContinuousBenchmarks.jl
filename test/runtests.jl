@@ -11,8 +11,8 @@ if isfile(shas_filepath) && length(readlines(shas_filepath)) > 0
         cd(getturingpath()) do 
             run(`git checkout $sha`)
         end
-        run(`julia -e "include(\\"benchmarks.jl\\"); runbenchmarks(send=true)"`)
+        run(`julia -e 'include("benchmarks.jl"); runbenchmarks(send=true)'`)
     end
 else
-    run(`julia -e "include(\\"benchmarks.jl\\"); runbenchmarks(send=false)"`)
+    run(`julia -e 'include("benchmarks.jl"); runbenchmarks(send=false)'`)
 end
