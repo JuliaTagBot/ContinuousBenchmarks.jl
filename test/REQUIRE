@@ -5,5 +5,5 @@ UnicodePlots
 StatsBase
 JLD2
 FileIO
-Stan
+CmdStan
 ProfileView

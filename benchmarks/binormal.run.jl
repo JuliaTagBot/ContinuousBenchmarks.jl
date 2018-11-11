@@ -1,6 +1,6 @@
 # https://github.com/goedman/Stan.jl/blob/master/Examples/Mamba/Binormal/binormal.jl
 
-using Stan, Turing, TuringBenchmarks
+using CmdStan, Turing, TuringBenchmarks
 
 include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "binormal-stan.model.jl"))
 include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "binormal.model.jl"))
@@ -28,7 +28,7 @@ include(joinpath(TuringBenchmarks.BENCH_DIR, "binormal-stan.run.jl"))
 # logd["stan"] = Dict("s" => mean(s_stan), "m" => mean(m_stan))
 logd["time_stan"] = get_stan_time("binormal")
 
-# println("Stan time  : $stan_time")
+# println("CmdStan time  : $stan_time")
 # println("Turing time: $turing_time")
 
 print_log(logd)

@@ -1,4 +1,4 @@
-using Stan, Turing, TuringBenchmarks
+using CmdStan, Turing, TuringBenchmarks
 
 #using Mamba: describe
 
@@ -6,8 +6,8 @@ include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "binormal-stan.model.jl"))
 
 global stanmodel, rc, sim1, sim, stan_time
 # stanmodel = Stanmodel(name="binormal", model=binorm, Sample(save_warmup=true));
-stanmodel = Stanmodel(Sample(algorithm=Stan.Hmc(Stan.Static(0.5*5),Stan.diag_e(),0.5,0.0),
-  save_warmup=true,adapt=Stan.Adapt(engaged=false)),
+stanmodel = Stanmodel(Sample(algorithm=CmdStan.Hmc(CmdStan.Static(0.5*5),CmdStan.diag_e(),0.5,0.0),
+  save_warmup=true,adapt=CmdStan.Adapt(engaged=false)),
   num_samples=2000, num_warmup=0, thin=1,
   name="binormal", model=binorm, nchains=1);
 

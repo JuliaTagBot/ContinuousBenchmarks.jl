@@ -1,4 +1,4 @@
-using Stan, Turing, TuringBenchmarks
+using CmdStan, Turing, TuringBenchmarks
 
 using Mamba: describe
 
@@ -28,8 +28,8 @@ generated quantities {
 "
 
 global stanmodel, rc, sim
-stanmodel = Stanmodel(Sample(algorithm=Stan.Hmc(Stan.Static(0.75 * 5), Stan.diag_e(), 0.75, 0.0),
-  save_warmup=true, adapt=Stan.Adapt(engaged=false)),
+stanmodel = Stanmodel(Sample(algorithm=CmdStan.Hmc(CmdStan.Static(0.75 * 5), CmdStan.diag_e(), 0.75, 0.0),
+  save_warmup=true, adapt=CmdStan.Adapt(engaged=false)),
   num_samples=2000, num_warmup=0, thin=1,
   name="binomial", model=binomialstanmodel, nchains=1);
 

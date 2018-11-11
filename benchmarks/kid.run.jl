@@ -1,6 +1,6 @@
 # NOTE: Stan codes are copied from https://github.com/goedman/Stan.jl/blob/master/Examples/NoMamba/ARM/Ch03/Kid/kidscore.jl
 
-using Stan, Turing, TuringBenchmarks
+using CmdStan, Turing, TuringBenchmarks
 using Mamba: describe
 
 const kid = "
@@ -178,8 +178,8 @@ const kiddata = [
 
 global stanmodel, rc, sim
 
-stanmodel = Stanmodel(Sample(algorithm=Stan.Hmc(Stan.Static(0.005*10), Stan.diag_e(), 0.0025, 0.0),
-  save_warmup=true, adapt=Stan.Adapt(engaged=false)),
+stanmodel = Stanmodel(Sample(algorithm=CmdStan.Hmc(CmdStan.Static(0.005*10), CmdStan.diag_e(), 0.0025, 0.0),
+  save_warmup=true, adapt=CmdStan.Adapt(engaged=false)),
   num_samples=2000, num_warmup=0, thin=1,
   name="kid", model=kid, nchains=1);
 rc, sim = stan(stanmodel, kiddata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
@@ -217,7 +217,7 @@ stan_d["sigma"] = mean(sim[:, ["sigma"], :].value[:])
 logd["stan"] = stan_d
 logd["time_stan"] = get_stan_time("kid")
 
-logd["note"] = "With static setting, Stan sometimes gives error: \"Exception: normal_lpdf: Scale parameter is nan, but must be > 0!\""
+logd["note"] = "With static setting, CmdStan sometimes gives error: \"Exception: normal_lpdf: Scale parameter is nan, but must be > 0!\""
 
 print_log(logd)
 #send_log(logd)
