@@ -26,7 +26,7 @@ logd = Dict(
 #include(joinpath(TuringBenchmarks.BENCH_DIR, "binormal-stan.run.jl"))
 
 # logd["stan"] = Dict("s" => mean(s_stan), "m" => mean(m_stan))
-logd["time_stan"] = get_stan_time("binormal")
+#logd["time_stan"] = get_stan_time("binormal")
 
 # println("CmdStan time  : $stan_time")
 # println("Turing time: $turing_time")
