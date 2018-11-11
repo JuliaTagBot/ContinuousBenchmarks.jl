@@ -1,33 +1,18 @@
-using TuringBenchmarks
-using Test
+using Pkg
 
-broken_benchmarks = [# Errors
-	                "dyes.run.jl",
-                	"kid.run.jl",
-                	"negative_binomial.run.jl",
-	                "normal_mixture.run.jl",
-                    "school8.run.jl",
-                    "binomial.run.jl",
-                    "sv.run.jl",
-                    # Freezes
-                	"lda.run.jl"]
-
-
-function tobenchmark(filename)
-    if filename ∈ broken_benchmarks
-        return false
-    else
-        return true
+shas_filepath = abspath(joinpath("..", "src", "bench_shas.txt"))
+if isfile(shas_filepath) && length(readlines(shas_filepath)) > 0
+    Pkg.develop("Turing")
+    function getturingpath()
+        splitdir(splitdir(readchomp(`julia -e "using Turing; println(pathof(Turing))"`))[1])[1]
     end
-end
-
-TURING_HOME = joinpath(@__DIR__, "..")
-for (root, dirs, files) in walkdir(TuringBenchmarks.BENCH_DIR)
-    for file in files
-        if tobenchmark(file) && splitext(file)[2] == ".jl"
-            filepath = abspath(joinpath(root, file))
-            benchmark_files([filepath], send=false)
-            @test true
+    shas = strip.(readlines(shas_filepath))
+    for sha in shas
+        cd(getturingpath()) do 
+            run(`git checkout $sha`)
         end
+        run(`julia -e "include(\\"benchmarks.jl\\"); runbenchmarks(send=true)"`)
     end
+else
+    run(`julia -e "include(\\"benchmarks.jl\\"); runbenchmarks(send=false)"`)
 end
