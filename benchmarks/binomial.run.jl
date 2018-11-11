@@ -1,4 +1,4 @@
-using Turing, TuringBenchmarks
+using CmdStan, Turing, TuringBenchmarks
 
 using Mamba: describe
 
@@ -27,19 +27,19 @@ generated quantities {
 }
 "
 
-global stanmodel, rc, sim
-stanmodel = Stanmodel(Sample(algorithm=Stan.Hmc(Stan.Static(0.75 * 5), Stan.diag_e(), 0.75, 0.0),
-  save_warmup=true, adapt=Stan.Adapt(engaged=false)),
-  num_samples=2000, num_warmup=0, thin=1,
-  name="binomial", model=binomialstanmodel, nchains=1);
+#global stanmodel, rc, sim
+#stanmodel = Stanmodel(Sample(algorithm=CmdStan.Hmc(CmdStan.Static(0.75 * 5), CmdStan.diag_e(), 0.75, 0.0),
+#  save_warmup=true, adapt=CmdStan.Adapt(engaged=false)),
+#  num_samples=2000, num_warmup=0, thin=1,
+#  name="binomial", model=binomialstanmodel, nchains=1);
 
 const binomialdata = [
   Dict("n" => 10, "k" => 5)
 ]
 
-rc, sim = stan(stanmodel, binomialdata, CmdStanDir=CMDSTAN_HOME, summary=false)
+#rc, sim = stan(stanmodel, binomialdata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
 
-describe(sim)
+#describe(sim)
 
 @model binomial_turing(n, k) = begin
   theta ~ Beta(1, 1)
@@ -47,6 +47,6 @@ describe(sim)
   k ~ Binomial(n, theta)
 end
 
-chn = sample(binomial_turing(data=binomialdata[1]), HMC(2000, 0.75, 5))
+chn = sample(binomial_turing(binomialdata[1]["n"], binomialdata[1]["k"]), HMC(2000, 0.75, 5))
 
 descibe(chn)

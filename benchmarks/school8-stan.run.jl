@@ -1,5 +1,4 @@
-using Turing, TuringBenchmarks
-using Stan
+using CmdStan, Turing, TuringBenchmarks
 
 # Model taken from https://github.com/goedman/Stan.jl/blob/master/Examples/Mamba/EightSchools/schools8.jl
 
@@ -8,12 +7,12 @@ include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "school8-stan.model.jl"))
 
 global stanmodel, rc, sim
 # stanmodel = Stanmodel(name="schools8", model=eightschools);
-stanmodel = Stanmodel(Sample(algorithm=Stan.Hmc(Stan.Static(0.75*5),Stan.diag_e(),0.75,0.0),
-  save_warmup=true,adapt=Stan.Adapt(engaged=false)),
+stanmodel = Stanmodel(Sample(algorithm=CmdStan.Hmc(CmdStan.Static(0.75*5),CmdStan.diag_e(),0.75,0.0),
+  save_warmup=true,adapt=CmdStan.Adapt(engaged=false)),
   num_samples=2000, num_warmup=0, thin=1,
   name="schools8", model=eightschools, nchains=1);
 
-rc, sim = stan(stanmodel, schools8data, CmdStanDir=CMDSTAN_HOME, summary=false)
+rc, sim = stan(stanmodel, schools8data, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
 
 stan_d = Dict()
 
@@ -29,6 +28,6 @@ for k = keys(stan_d)
   stan_d[k] = mean(stan_d[k])
 end
 
-# println("Stan time: $stan_time")
+# println("CmdStan time: $stan_time")
 
 # describe(sim)

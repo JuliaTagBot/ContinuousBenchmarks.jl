@@ -1,33 +1,19 @@
-using TuringBenchmarks
-using Test
+using Pkg
 
-mamba_benchmarks = ["binomial.run.jl", 
-                    "dyes.run.jl", 
-                    "gdemo-gewke.run.jl", 
-                    "kid.run.jl", 
-                    "school8.run.jl", 
-                    "sv.run.jl"]
-
-#files_to_bench = ["bernoulli.run.jl"]
-files_to_bench = ["bernoulli.run.jl"]
-
-function tobenchmark(filename)
-    if filename ∈ mamba_benchmarks
-        return false
-    elseif filename ∈ files_to_bench
-        return true
-    else
-        return false
+Pkg.develop("Turing")
+juliaexe_path = joinpath(Sys.BINDIR, Base.julia_exename())
+shas_filepath = abspath(joinpath("..", "src", "bench_shas.txt"))
+if isfile(shas_filepath) && length(readlines(shas_filepath)) > 0
+    function getturingpath()
+        splitdir(splitdir(readchomp(`$(juliaexe_path) -e "using Turing; println(pathof(Turing))"`))[1])[1]
     end
-end
-
-TURING_HOME = joinpath(@__DIR__, "..")
-for (root, dirs, files) in walkdir(TuringBenchmarks.BENCH_DIR)
-    for file in files
-        if tobenchmark(file) && splitext(file)[2] == ".jl"
-            filepath = abspath(joinpath(root, file))
-            benchmark_files([filepath], send=false)
-            @test true
+    shas = strip.(readlines(shas_filepath))
+    for sha in shas
+        cd(getturingpath()) do 
+            run(`git checkout $sha`)
         end
+        run(`$(juliaexe_path) -e 'include("benchmarks.jl"); runbenchmarks(send=true)'`)
     end
+else
+    run(`$(juliaexe_path) -e 'include("benchmarks.jl"); runbenchmarks(send=false)'`)
 end

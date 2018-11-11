@@ -1,15 +1,15 @@
 # https://github.com/goedman/Stan.jl/blob/master/Examples/Mamba/Binormal/binormal.jl
 
-using Turing, TuringBenchmarks
-using HTTP: get, post, put
+using CmdStan, Turing, TuringBenchmarks
 
 include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "binormal-stan.model.jl"))
+include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "binormal.model.jl"))
 
 @tbenchmark(HMC(20, 0.5, 5), binormal, ())
 bench_res = @tbenchmark(HMC(2000, 0.5, 5), binormal, ())
-# chn = sample(binormal(), HMC(2000,0.5,5))
+chn = sample(binormal(), HMC(2000,0.5,5))
 
-# describe(chn)
+describe(chn)
 
 # turing_time = sum(chn[:elapsed])
 
@@ -23,13 +23,13 @@ logd = Dict(
 
 # logd = build_logd("Binormal: sampling from the prior", bench_res...)
 
-include(joinpath(TuringBenchmarks.BENCH_DIR, "binormal-stan.run.jl"))
+#include(joinpath(TuringBenchmarks.BENCH_DIR, "binormal-stan.run.jl"))
 
 # logd["stan"] = Dict("s" => mean(s_stan), "m" => mean(m_stan))
-logd["time_stan"] = get_stan_time("binormal")
+#logd["time_stan"] = get_stan_time("binormal")
 
-# println("Stan time  : $stan_time")
+# println("CmdStan time  : $stan_time")
 # println("Turing time: $turing_time")
 
 print_log(logd)
-#send_log(logd)
+send_log(logd)

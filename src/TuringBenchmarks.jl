@@ -1,6 +1,8 @@
 module TuringBenchmarks
 
-using Statistics
+__precompile__(false)
+
+using Statistics, Dates
 
 export  benchmark_models,
         benchmark_files,
@@ -15,16 +17,17 @@ export  benchmark_models,
 # using StatPlots
 # using DataFrames
 
-const MODELS_DIR = joinpath(@__DIR__, "..", "models")
-const STAN_MODELS_DIR = joinpath(MODELS_DIR, "stan-models")
+const MODELS_DIR = abspath(joinpath(@__DIR__, "..", "models"))
+const STAN_MODELS_DIR = abspath(joinpath(MODELS_DIR, "stan-models"))
 
-const DATA_DIR = joinpath(@__DIR__, "..", "data")
-const STAN_DATA_DIR = joinpath(DATA_DIR, "stan-data")
+const DATA_DIR = abspath(joinpath(@__DIR__, "..", "data"))
+const STAN_DATA_DIR = abspath(joinpath(DATA_DIR, "stan-data"))
 
-const BENCH_DIR = joinpath(@__DIR__, "..", "benchmarks")
-const SIMULATIONS_DIR = joinpath(@__DIR__, "..", "simulations")
+const BENCH_DIR = abspath(joinpath(@__DIR__, "..", "benchmarks"))
+const SIMULATIONS_DIR = abspath(joinpath(@__DIR__, "..", "simulations"))
 
-const CMDSTAN_HOME = joinpath(@__DIR__, "..", "cmdstan")
+include("cmdstan_home.jl")
+const CMDSTAN_HOME = cmdstan_home()
 
 const SEND_SUMMARY = Ref(true)
 
@@ -45,13 +48,15 @@ function get_stan_time(stan_model_name::String)
     s = readlines(pwd()*"/tmp/$(stan_model_name)_samples_1.csv")
     println(s[end-1])
     m = match(r"(?<time>[0-9]+.[0-9]*)", s[end-1])
-    float(m[:time])
+    parse(Float64, m[:time])
 end
 
 # Run benchmark
 macro tbenchmark(alg, model, data)
+    model = :(($model isa String ? eval(Meta.parse($model)) : $model))
+    model_dfn = data isa Expr && data.head == :tuple ? :(model_f = $model($(data)...)) : model_f = :(model_f = $model($data))
     esc(quote
-        model_f = $model($data)
+        $model_dfn
         chain, _, mem, _, _  = @timed sample(model_f, $alg)
         $(string(alg)), sum(chain[:elapsed]), mem, chain, deepcopy(chain)
     end)
@@ -89,27 +94,29 @@ function log2str(logd::Dict, monitor=[])
         for (v, m) = logd["turing"]
             if isempty(monitor) || v in monitor
                 str *= ("| >> $v <<") * "\n"
-                str *= ("| mean = $(round(m, 3))") * "\n"
+                str *= ("| mean = $(round.(m, digits=3))") * "\n"
                 if haskey(logd, "analytic") && haskey(logd["analytic"], v)
-                    str *= ("|   -> analytic = $(round(logd["analytic"][v], 3)), ")
-                    diff = abs(m - logd["analytic"][v])
-                    diff_output = "diff = $(round(diff, 3))"
+                    str *= ("|   -> analytic = $(round(logd["analytic"][v], digits=3)), ")
+                    diff = abs.(m - logd["analytic"][v])
+                    diff_output = "diff = $(round(diff, digits=3))"
                     if sum(diff) > 0.2
                         # TODO: try to fix this
-                        print_with_color(:red, diff_output*"\n")
+                        #print_with_color(:red, diff_output*"\n")
+                        print(diff_output*"\n")
                         str *= (diff_output) * "\n"
                     else
                         str *= (diff_output) * "\n"
                     end
                 end
                 if haskey(logd, "stan") && haskey(logd["stan"], v)
-                    str *= ("|   -> Stan     = $(round(logd["stan"][v], 3)), ")
+                    str *= ("|   -> Stan     = $(round.(logd["stan"][v], digits=3)), ")
                     println(m, logd["stan"][v])
-                    diff = abs(m - logd["stan"][v])
-                    diff_output = "diff = $(round(diff, 3))"
+                    diff = abs.(m - logd["stan"][v])
+                    diff_output = "diff = $(round.(diff, digits=3))"
                     if sum(diff) > 0.2
                         # TODO: try to fix this
-                        print_with_color(:red, diff_output*"\n")
+                        #print_with_color(:red, diff_output*"\n")
+                        print(diff_output*"\n")
                         str *= (diff_output) * "\n"
                     else
                         str *= (diff_output) * "\n"
@@ -132,7 +139,7 @@ print_log(logd::Dict, monitor=[]) = print(log2str(logd, monitor))
 function send_log(logd::Dict, monitor=[])
     dir_old = pwd()
     cd(splitdir(Base.@__DIR__)[1])
-    commit_str = replace(split(readstring(pipeline(`git show --summary `, `grep "commit"`)), " ")[2], "\n", "")
+    commit_str = replace(split(read(pipeline(`git show --summary `, `grep "commit"`), String), " ")[2], "\n"=>"")
     cd(dir_old)
     time_str = "$(Dates.format(now(), "dd-u-yyyy-HH-MM-SS"))"
     logd["created"] = time_str
@@ -148,7 +155,7 @@ function gen_mkd_table_for_commit(commit)
     res = get(api_url)
     # print(res)
 
-    json = JSON.parse(readstring(res))
+    json = JSON.parse(read(res, String))
     # json[1]
 
     mkd  = "| Model | Turing | Stan | Ratio |\n"
@@ -157,7 +164,7 @@ function gen_mkd_table_for_commit(commit)
         modelName = log["name"]
         tt, ts = log["time"], log["time_stan"]
         rt = tt / ts
-        tt, ts, rt = round(tt, 2), round(ts, 2), round(rt, 2)
+        tt, ts, rt = round(tt, digits=2), round(ts, digits=2), round(rt, digits=2)
         mkd *= "|$modelName|$tt|$ts|$rt|\n"
     end
 
@@ -182,23 +189,31 @@ end
 
 function _benchmark_model(modelname; send = true)
     println("Benchmarking `$modelname` ... ")
-    filepath = getbenchpath(modelname)
-    _benchmark_file(filepath, send=send, status = false)
+    _benchmark_file(modelname, send=send, model = true)
     println("`$modelname` ✓")
     return 
 end
 
 getbenchpath(modelname) = joinpath(TuringBenchmarks.BENCH_DIR, "$(modelname).run.jl")
 
-function _benchmark_file(filepath; send = true, status = false)
-    status && println("Benchmarking `$filepath` ... ")
+function _benchmark_file(fileormodel; send = true, model = false)
+    if model
+        include_arg = "TuringBenchmarks.getbenchpath(\"$fileormodel\")"
+    else
+        filepath = fileormodel
+        println("Benchmarking `$filepath` ... ")
+        include_arg = "\"$(replace(filepath, "\\"=>"\\\\"))\""
+    end
+    julia_path = joinpath(Sys.BINDIR, Base.julia_exename())
     send_code = send ? "TuringBenchmarks.SEND_SUMMARY[] = false;" : ""
-    job = `julia -e "   using Turing, TuringBenchmarks, Stan;
-                        Stan.set_cmdstan_home!(\"$(replace(TuringBenchmarks.CMDSTAN_HOME, "\\"=>"\\\\"))\");
-                        $send_code
-                        include(\"$(replace(filepath, "\\"=>"\\\\"))\")"`
+
+    job = `$julia_path -e
+                "using CmdStan, Turing, TuringBenchmarks;
+                CmdStan.set_cmdstan_home!(TuringBenchmarks.CMDSTAN_HOME);
+                $send_code
+                include($include_arg);"`
     println(job); run(job)
-    status && println("`$filepath` ✓")
+    !model && println("`$filepath` ✓")
     return 
 end
 

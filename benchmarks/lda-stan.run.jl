@@ -1,18 +1,18 @@
-using Turing, TuringBenchmarks
-using Stan
+using CmdStan, Turing, TuringBenchmarks
+using Mamba
 
 include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "lda-stan.data.jl"))
 include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "lda-stan.model.jl"))
 
 stan_model_name = "LDA"
 # ldastan = Stanmodel(Sample(save_warmup=true), name=stan_model_name, model=ldastanmodel, nchains=1);
-# To understand parameters, use: ?Stan.Static, ?Stan,Hmc
-ldastan = Stanmodel(Sample(algorithm=Stan.Hmc(Stan.Static(0.05),Stan.diag_e(),0.005,0.0),
-  save_warmup=true,adapt=Stan.Adapt(engaged=false)),
+# To understand parameters, use: ?CmdStan.Static, ?CmdStan.Hmc
+ldastan = Stanmodel(Sample(algorithm=CmdStan.Hmc(CmdStan.Static(0.05),CmdStan.diag_e(),0.005,0.0),
+  save_warmup=true,adapt=CmdStan.Adapt(engaged=false)),
   num_samples=3000, num_warmup=0, thin=1,
   name=stan_model_name, model=ldastanmodel, nchains=1);
 
-rc, lda_stan_sim = stan(ldastan, ldastandata, CmdStanDir=CMDSTAN_HOME, summary=false);
+rc, lda_stan_sim = stan(ldastan, ldastandata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false);
 # lda_stan_sim.names
 V = ldastandata[1]["V"]
 K = ldastandata[1]["K"]
@@ -27,4 +27,4 @@ for i = 1:K
 end
 
 lda_time = get_stan_time(stan_model_name)
-println("Stan time: ", lda_time)
+println("CmdStan time: ", lda_time)

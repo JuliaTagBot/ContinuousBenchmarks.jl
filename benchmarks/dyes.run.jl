@@ -1,4 +1,4 @@
-using Turing, TuringBenchmarks
+using CmdStan, Turing, TuringBenchmarks
 using Mamba: describe
 
 const dyes ="
@@ -51,28 +51,31 @@ const dyesdata = [
   )
 ]
 
-global stanmodel, rc, sim
+#global stanmodel, rc, sim
 
-stanmodel = Stanmodel(Sample(algorithm=Stan.Hmc(Stan.Static(0.38 * 11), Stan.diag_e(), 0.38, 0.0),
-  save_warmup=true, adapt=Stan.Adapt(engaged=false)),
-  num_samples=2000, num_warmup=0, thin=1,
-  name="dyes", model=dyes, nchains=1);
-rc, sim = stan(stanmodel, dyesdata, CmdStanDir=CMDSTAN_HOME, summary=false)
+#stanmodel = Stanmodel(Sample(algorithm=CmdStan.Hmc(CmdStan.Static(0.38 * 11), CmdStan.diag_e(), 0.38, 0.0),
+#  save_warmup=true, adapt=CmdStan.Adapt(engaged=false)),
+#  num_samples=2000, num_warmup=0, thin=1,
+#  name="dyes", model=dyes, nchains=1);
+#rc, sim = stan(stanmodel, dyesdata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
 
-stanmodel = Stanmodel(name="dyes", model=dyes, useMamba=false)
-rc, sim = stan(stanmodel, dyesdata, CmdStanDir=CMDSTAN_HOME)
+#stanmodel = Stanmodel(name="dyes", model=dyes, useMamba=false)
+#rc, sim = stan(stanmodel, dyesdata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME)
 
 @model dyes_turing(BATCHES, SAMPLES, y) = begin
   theta ~ Normal(0.0, 1E5)
   tau_between ~ Gamma(.001, .001)
   tau_within ~ Gamma(.001, .001)
-  mu = Vector{Real}(BATCHES)
+  mu = tzeros(BATCHES)
   mu ~ [Normal(theta, 1/sqrt(tau_between))]
   for n = 1:BATCHES
     y[n,:] ~ MvNormal(mu[n] .* ones(SAMPLES), 1/sqrt(tau_within) .* ones(SAMPLES))
   end
 end
 
-chn = sample(dyes_turing(data=dyesdata[1]), NUTS(2000, 0.65))
+_batches = dyesdata[1]["BATCHES"]
+_samples = dyesdata[1]["SAMPLES"]
+_y = dyesdata[1]["y"]
+chn = sample(dyes_turing(_batches, _samples, _y), NUTS(2000, 0.65))
 
 describe(chn)

@@ -1,1 +1,0 @@
-https://github.com/stan-dev/cmdstan/releases/download/v2.18.0/cmdstan-2.18.0.zip
