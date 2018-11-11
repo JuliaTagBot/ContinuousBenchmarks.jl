@@ -208,7 +208,7 @@ function _benchmark_file(fileormodel; send = true, model = false)
     send_code = send ? "TuringBenchmarks.SEND_SUMMARY[] = false;" : ""
 
     job = `$julia_path -e
-                "using Turing, TuringBenchmarks, Stan;
+                "using Stan, Turing, TuringBenchmarks;
                 Stan.set_cmdstan_home!(TuringBenchmarks.CMDSTAN_HOME);
                 $send_code
                 include($include_arg);"`
