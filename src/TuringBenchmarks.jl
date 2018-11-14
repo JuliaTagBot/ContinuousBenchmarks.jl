@@ -205,7 +205,7 @@ function _benchmark_file(fileormodel; send = true, model = false)
         include_arg = "\"$(replace(filepath, "\\"=>"\\\\"))\""
     end
     julia_path = joinpath(Sys.BINDIR, Base.julia_exename())
-    send_code = send ? "TuringBenchmarks.SEND_SUMMARY[] = false;" : ""
+    send_code = !send ? "TuringBenchmarks.SEND_SUMMARY[] = false;" : ""
 
     job = `$julia_path -e
                 "using CmdStan, Turing, TuringBenchmarks;
