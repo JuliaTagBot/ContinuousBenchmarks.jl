@@ -2,7 +2,7 @@ module TuringBenchmarks
 
 __precompile__(false)
 
-using Statistics, Dates
+using Statistics, Dates, HTTP, JSON
 
 export  benchmark_models,
         benchmark_files,
@@ -145,7 +145,9 @@ function send_log(logd::Dict, monitor=[])
     logd["created"] = time_str
     logd["commit"] = commit_str
     if SEND_SUMMARY[]
-        post("https://api.mlab.com/api/1/databases/benchmark/collections/log?apiKey=Hak1H9--KFJz7aAx2rAbNNgub1KEylgN"; json=logd)
+        HTTP.open("POST", "https://api.mlab.com/api/1/databases/benchmark/collections/log?apiKey=Hak1H9--KFJz7aAx2rAbNNgub1KEylgN") do io
+            write(io, JSON.json(logd))
+        end
     end
 end
 
