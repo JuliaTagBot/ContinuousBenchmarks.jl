@@ -17,6 +17,7 @@ export  benchmark_models,
 # using StatPlots
 # using DataFrames
 
+const LOG_URL = "http://github.turingbenchmarks.ultrahook.com"
 const MODELS_DIR = abspath(joinpath(@__DIR__, "..", "models"))
 const STAN_MODELS_DIR = abspath(joinpath(MODELS_DIR, "stan-models"))
 
@@ -145,7 +146,7 @@ function send_log(logd::Dict, monitor=[])
     logd["created"] = time_str
     logd["commit"] = commit_str
     if SEND_SUMMARY[]
-        HTTP.open("POST", "https://api.mlab.com/api/1/databases/benchmark/collections/log?apiKey=Hak1H9--KFJz7aAx2rAbNNgub1KEylgN") do io
+        HTTP.open("POST", TuringBenchmarks.LOG_URL) do io
             write(io, JSON.json(logd))
         end
     end
@@ -184,7 +185,7 @@ end
 function benchmark_files(file_list=default_model_list; send = true)
     println("Turing benchmarking started.")    
     for file in file_list
-        _benchmark_file(file)
+        _benchmark_file(file, send = send)
     end
     println("Turing benchmarking completed.")
 end
@@ -207,7 +208,7 @@ function _benchmark_file(fileormodel; send = true, model = false)
         include_arg = "\"$(replace(filepath, "\\"=>"\\\\"))\""
     end
     julia_path = joinpath(Sys.BINDIR, Base.julia_exename())
-    send_code = !send ? "TuringBenchmarks.SEND_SUMMARY[] = false;" : ""
+    send_code = send ? "TuringBenchmarks.SEND_SUMMARY[] = true;" : "TuringBenchmarks.SEND_SUMMARY[] = false"
 
     job = `$julia_path -e
                 "using CmdStan, Turing, TuringBenchmarks;
