@@ -11,6 +11,7 @@ broken_benchmarks = [# Errors
                     "MoC.run.jl",
                     "sv.run.jl",
                     "gdemo-geweke.run.jl",
+                    "profile.jl", # segfaults
                     # Freezes
                 	"lda.run.jl"]
 
