@@ -184,6 +184,7 @@ function benchmark_models(model_list=default_model_list; send = true)
             if :msg in fieldnames(typeof(err))
                 println(err.msg)
             end
+            !send && throw(err)
         end
     end
     println("Turing benchmarking completed.")
@@ -199,6 +200,7 @@ function benchmark_files(file_list=default_model_list; send = true)
             if :msg in fieldnames(typeof(err))
                 println(err.msg)
             end
+            !send && throw(err)
         end
     end
     println("Turing benchmarking completed.")
