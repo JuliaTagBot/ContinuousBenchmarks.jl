@@ -13,8 +13,18 @@ broken_benchmarks = [# Errors
                     "gdemo-geweke.run.jl",
                     "profile.jl", # segfaults
                     # Freezes
-                	"lda.run.jl"]
-
+                    "lda.run.jl"]
+# Don't have send_log
+inactive_benchmarks = ["binomial.run.jl",
+                        "change-point.jl",
+                        "dyes.run.jl",
+                        "gdemo-geweke.run.jl",
+                        "negative_binomial.run.jl",
+                        "normal-loc.run.jl",
+                        "ode.jl",
+                        "optimization.jl",
+                        "profile.jl",
+                        "sv.run.jl"]
 
 function tobenchmark(filename)
     if filename ∈ broken_benchmarks || occursin("stan", filename)
@@ -28,7 +38,7 @@ function runbenchmarks(; send=false)
     TURING_HOME = joinpath(@__DIR__, "..")
     for (root, dirs, files) in walkdir(TuringBenchmarks.BENCH_DIR)
         for file in files
-            if tobenchmark(file) && splitext(file)[2] == ".jl"
+            if tobenchmark(file) && !(send && file ∈ inactive_benchmarks) && splitext(file)[2] == ".jl"
                 filepath = abspath(joinpath(root, file))
                 benchmark_files([filepath], send=send)
                 @test true
