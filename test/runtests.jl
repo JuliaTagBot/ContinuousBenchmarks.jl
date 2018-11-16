@@ -10,8 +10,9 @@ if isfile(shas_filepath) && length(readlines(shas_filepath)) > 0
         splitdir(splitdir(readchomp(`$(juliaexe_path) -e "using Turing; println(pathof(Turing))"`))[1])[1]
     end
     shas = strip.(readlines(shas_filepath))
+    branch_name = join(snipsha.(shas), "_")
     HTTP.open("POST", TuringBenchmarks.LOG_URL) do io
-        write(io, JSON.json(Dict("start" => join(snipsha.(shas), "_"))))
+        write(io, JSON.json(Dict("start" => branch_name)))
     end
     for sha in shas
         cd(getturingpath()) do 
@@ -20,7 +21,7 @@ if isfile(shas_filepath) && length(readlines(shas_filepath)) > 0
         run(`$(juliaexe_path) -e 'include("benchmarks.jl"); runbenchmarks(send=true)'`)
     end
     HTTP.open("POST", TuringBenchmarks.LOG_URL) do io
-        write(io, JSON.json(Dict("finish" => "")))
+        write(io, JSON.json(Dict("finish" => branch_name)))
     end
 else
     run(`$(juliaexe_path) -e 'include("benchmarks.jl"); runbenchmarks(send=false)'`)
