@@ -177,7 +177,14 @@ end
 function benchmark_models(model_list=default_model_list; send = true)
     println("Turing benchmarking started.")
     for model in model_list
-        _benchmark_model(model, send=send)
+        try
+            _benchmark_model(model, send=send)
+        catch err
+            println("Error running the benchmark $model.")
+            if :msg in fieldnames(typeof(err))
+                println(err.msg)
+            end
+        end
     end
     println("Turing benchmarking completed.")
 end
@@ -185,7 +192,14 @@ end
 function benchmark_files(file_list=default_model_list; send = true)
     println("Turing benchmarking started.")    
     for file in file_list
-        _benchmark_file(file, send = send)
+        try
+            _benchmark_file(file, send = send)
+        catch err
+            println("Error running the benchmark $file.")
+            if :msg in fieldnames(typeof(err))
+                println(err.msg)
+            end
+        end
     end
     println("Turing benchmarking completed.")
 end
