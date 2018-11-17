@@ -137,14 +137,34 @@ end
 
 print_log(logd::Dict, monitor=[]) = print(log2str(logd, monitor))
 
+snip(str, len) = str[1:min(len, end)]
+snipsha(sha) = snip(sha, 7)
+function getturingpath()
+    juliaexe_path = joinpath(Sys.BINDIR, Base.julia_exename())
+    splitdir(splitdir(readchomp(`$(juliaexe_path) -e "using Turing; println(pathof(Turing))"`))[1])[1]
+end
+
+function getcommit()
+    replace(split(read(pipeline(`git show --summary `, `grep "commit"`), String), " ")[2], "\n"=>"")
+end
+
 function send_log(logd::Dict, monitor=[])
-    dir_old = pwd()
-    cd(splitdir(Base.@__DIR__)[1])
-    commit_str = replace(split(read(pipeline(`git show --summary `, `grep "commit"`), String), " ")[2], "\n"=>"")
-    cd(dir_old)
+    benchmarks_commit_str = ""
+    cd(splitdir(Base.@__DIR__)[1]) do 
+        benchmarks_commit_str = getcommit()
+    end
+    @assert benchmarks_commit_str != ""
+
+    turing_commit_str = ""
+    cd(getturingpath()) do 
+        turing_commit_str = getcommit()
+    end
+    @assert turing_commit_str != ""
+
     time_str = "$(Dates.format(now(), "dd-u-yyyy-HH-MM-SS"))"
     logd["created"] = time_str
-    logd["commit"] = commit_str
+    logd["turing_commit"] = turing_commit_str
+    logd["bench_commit"] = benchmarks_commit_str
     if SEND_SUMMARY[]
         HTTP.open("POST", TuringBenchmarks.LOG_URL) do io
             write(io, JSON.json(logd))
