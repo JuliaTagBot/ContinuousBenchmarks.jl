@@ -21,7 +21,7 @@ logd = Dict(
   "turing" => Dict("y[1]" => mean(bench_res[4][:y])[1], "y[2]" => mean(bench_res[4][:y])[2])
 )
 
-# logd = build_logd("Binormal: sampling from the prior", bench_res...)
+logd = build_logd("Binormal: sampling from the prior", bench_res...)
 
 #include(joinpath(TuringBenchmarks.BENCH_DIR, "binormal-stan.run.jl"))
 
