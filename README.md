@@ -21,5 +21,6 @@ Both the broken and inactive benchmark file names can be found in https://github
  - `"engine"`, and
  - "turing", where `log["turing"]` must have the key `"elapsed"`.
 2. The `name`-`engine` combination must be unique for every benchmark.
-3. Every benchmark file must be runnable in its own Julia session. Any files which need to be executed first should be included in the benchmark file.
-4. Since each benchmark is run in its own Julia session, any warm up runs should be included in the benchmark file to avoid counting the compilation time.
+3. The `log` `Dict` must be sent using the `send_log` function to activate the benchmark, otherwise results are not saved.
+4. Every benchmark file must be runnable in its own Julia session. Any files which need to be executed first should be included in the benchmark file.
+5. Since each benchmark is run in its own Julia session, any warm up runs should be included in the benchmark file to avoid counting the compilation time.
