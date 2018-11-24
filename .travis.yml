@@ -11,7 +11,6 @@ notifications:
 
 script:
   - julia --check-bounds=yes -e 'using Pkg;
-                              Pkg.develop(pwd()); 
                               Pkg.build("TuringBenchmarks"); 
                               Pkg.test("TuringBenchmarks"; coverage=true)'
 
