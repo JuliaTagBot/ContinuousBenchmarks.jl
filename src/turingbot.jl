@@ -3,6 +3,7 @@ module TuringBot
 # Inspired from https://github.com/JuliaCI/Nanosoldier.jl
 
 using GitHub, HTTP, Sockets, JSON
+using ..TuringBenchmarks: tobenchmark, BENCH_DIR, inactive_benchmarks, benchmark_files
 
 # Authentication
 const username = get(ENV, "GITHUB_USERNAME", "")
@@ -18,15 +19,24 @@ const logging = Ref(false)
 const started = Ref(false)
 const active_pr_number = Ref(0)
 
+struct LocalPath
+    s::String
+end
+
 snip(str, len) = str[1:min(len, end)]
 snipsha(sha) = snip(sha, 7)
 drop2(x) = x[3:end]
 repo_url(repo_name) = "https://$username:$(authtoken)@github.com/$(repo_name).git"
 
 gitclone!(path, repo_name) = run(`git clone $(repo_url(repo_name)) $(path)`)
+gitclone!(path, repo_path::LocalPath) = run(`git clone $(repo_path.s) $(path)`)
 
 function gitreset!(repo_name; branch_name = "master")
     run(`git fetch $(repo_url(repo_name))`)
+    run(`git reset --hard origin/$branch_name`)
+end
+function gitreset!(repo_path::LocalPath; branch_name = "master")
+    run(`git fetch $(repo_path.s)`)
     run(`git reset --hard origin/$branch_name`)
 end
 gitreset!(path, repo_name; branch_name = "master") = cd(()->gitreset!(repo_name; branch_name = branch_name), path)
@@ -55,6 +65,13 @@ function gitpush!(repo_name, branch; force = true)
         run(`git push -f $(repo_url(repo_name)) $branch`)
     else
         run(`git push $(repo_url(repo_name)) $branch`)
+    end
+end
+function gitpush!(repo_path::LocalPath, branch; force = true)
+    if force
+        run(`git push -f $(repo_path.s) $branch`)
+    else
+        run(`git push $(repo_path.s) $branch`)
     end
 end
 gitpush!(path, repo_name, branch) = cd(()->gitpush!(repo_name, branch), path)
@@ -229,6 +246,56 @@ mutable struct TuringListener
     result_listener::Function
 end
 
+function setup(sink_branch_name)
+    temp_dir = ".temp_" * splitdir(sinkrepo_name)[2]
+    if isdir(temp_dir)
+        gitreset!(temp_dir, sinkrepo_name)
+    else
+        gitclone!(temp_dir, sinkrepo_name)
+    end
+    gitcheckout!(temp_dir, sink_branch_name)
+    gitreset!(temp_dir, sinkrepo_name, branch_name=sink_branch_name)
+    results_dir = joinpath(temp_dir, "benchmark_results")
+    isdir(results_dir) || mkdir(results_dir)
+    cd(results_dir)
+    isdir(sink_branch_name) || mkdir(sink_branch_name)
+    cd(sink_branch_name)
+
+    return
+end
+
+function wrapup(sink_branch_name)
+    temp_dir = ".temp_" * splitdir(sinkrepo_name)[2]
+    shas = String[]
+    cd(joinpath("..", "..", "src")) do
+        shas = strip.(readlines("bench_shas.txt"))
+        rm("bench_shas.txt")
+    end
+    write_report!("report.md", shas, sink_branch_name)
+    cd(joinpath("..", "..", ".."))
+    gitadd!(temp_dir)
+    gitcommit!(temp_dir; message="Add benchmarking results for $sink_branch_name. [ci skip]")
+    try
+        gitpush!(temp_dir, sinkrepo_name, sink_branch_name)
+    catch
+        throw("Pushing to the remote branch $sink_branch_name failed.")
+    end
+    gitreset!(temp_dir, sinkrepo_name)
+
+    return
+end
+
+function write_comment(branch_name)
+    sinkrepo_url = repo(Repo(sinkrepo_name)).html_url.uri
+    report_url = join([sinkrepo_url, "tree", branch_name, "benchmark_results", branch_name, "report.md"], "/")
+    body = "Benchmarking job has completed. You can see a summary of the results in this [report]($report_url)."
+    params = Dict("body"=>body)
+    pr = GitHub.pull_request(Repo(sourcerepo_name), active_pr_number[])
+    GitHub.create_comment(Repo(sourcerepo_name), pr, :pr, params=params, auth=auth)
+
+    return
+end
+
 function TuringListener(github_listener::EventListener)
     result_listener = (request) -> begin
         data = JSON.parse(IOBuffer(HTTP.payload(request)))
@@ -236,46 +303,14 @@ function TuringListener(github_listener::EventListener)
             logging[] && started[] && return HTTP.Response(204)
             started[] = true
             branch_name = data["start"]
-            temp_dir = ".log_" * splitdir(sinkrepo_name)[2]
-            if isdir(temp_dir)
-                gitreset!(temp_dir, sinkrepo_name)
-            else
-                gitclone!(temp_dir, sinkrepo_name)
-            end
-            gitcheckout!(temp_dir, branch_name)
-            gitreset!(temp_dir, sinkrepo_name, branch_name=branch_name)
-            results_dir = joinpath(temp_dir, "benchmark_results")
-            isdir(results_dir) || mkdir(results_dir)
-            cd(results_dir)
-            isdir(branch_name) || mkdir(branch_name)
-            cd(branch_name)
+            setup(branch_name)
             return HTTP.Response(200)
         end
         if length(keys(data)) == 1 && haskey(data, "finish")
             !(logging[] && started[]) && return HTTP.Response(204)
             branch_name = data["finish"]
-            temp_dir = ".log_" * splitdir(sinkrepo_name)[2]
-            shas = String[]
-            cd(joinpath("..", "..", "src")) do
-                shas = strip.(readlines("bench_shas.txt"))
-                rm("bench_shas.txt")
-            end
-            write_report!("report.md", shas, branch_name)
-            cd(joinpath("..", "..", ".."))
-            gitadd!(temp_dir)
-            gitcommit!(temp_dir; message="Add benchmarking results for $branch_name. [ci skip]")
-            try
-                gitpush!(temp_dir, sinkrepo_name, branch_name)
-            catch
-                throw("Pushing to the remote branch $branch_name failed.")
-            end
-            gitreset!(temp_dir, sinkrepo_name)
-            sinkrepo_url = repo(Repo(sinkrepo_name)).html_url.uri
-            report_url = join([sinkrepo_url, "tree", branch_name, "benchmark_results", branch_name, "report.md"], "/")
-            body = "Benchmarking job has completed. You can see a summary of the results in this [report]($report_url)."
-            params = Dict("body"=>body)
-            pr = GitHub.pull_request(Repo(sourcerepo_name), active_pr_number[])
-            GitHub.create_comment(Repo(sourcerepo_name), pr, :pr, params=params, auth=auth)
+            wrapup(branch_name)
+            write_comment(branch_name)
             logging[] = false
             active_pr_number[] = 0
             started[] = false
@@ -304,7 +339,7 @@ function getfilename(data)
     filename
 end
 
-function write_report!(filename, shas, branch_name)
+function write_report!(filename, shas, branch_name="")
     path_pairs = []
     table = "| ID | time ratio |\n"
     table *= "|----|------------|\n"
@@ -334,9 +369,11 @@ function write_report!(filename, shas, branch_name)
     end
     bench_commit = ""
     sinkrepo_url = repo(Repo(sinkrepo_name)).html_url.uri
-    report_base_url = join([sinkrepo_url, "tree", branch_name, "benchmark_results", branch_name], "/")
-    commit1_url = join([report_base_url, snipsha(shas[1])], "/")
-    commit2_url = join([report_base_url, snipsha(shas[2])], "/")
+    if branch_name != ""
+        report_base_url = join([sinkrepo_url, "tree", branch_name, "benchmark_results", branch_name], "/")
+        commit1_url = join([report_base_url, snipsha(shas[1])], "/")
+        commit2_url = join([report_base_url, snipsha(shas[2])], "/")
+    end
     for (path1, path2) in path_pairs
         if path1 != nothing
             data1 = JSON.parse(IOBuffer(read(path1)))
@@ -354,10 +391,14 @@ function write_report!(filename, shas, branch_name)
                     @goto path2_error
                 end
                 time2 = round(data2["turing"]["elapsed"] * 1000, digits = 3)
-                url1 = join([commit1_url, getfilename(data1)], "/") * ".json"
-                url2 = join([commit2_url, getfilename(data2)], "/") * ".json"
                 ratio, symbol = getratio(time2, time1)
-                table *= "$id | $ratio ([$time2 ms]($url2) / [$time1 ms]($url1)) $symbol |\n"
+                if branch_name != ""
+                    url1 = join([commit1_url, getfilename(data1)], "/") * ".json"
+                    url2 = join([commit2_url, getfilename(data2)], "/") * ".json"
+                    table *= "$id | $ratio ([$time2 ms]($url2) / [$time1 ms]($url1)) $symbol |\n"
+                else
+                    table *= "$id | $ratio ($time2 ms / $time1 ms) $symbol |\n"
+                end
             else
                 @label path2_error
                 table *= "$id | NA |\n"
@@ -410,5 +451,73 @@ end
 const turing_listener = TuringListener(github_listener)
 
 listen(port=8000) = GitHub.run(turing_listener, IPv4(127,0,0,1), port)
+
+getbranchsha(repo, branch) = GitHub.branch(repo, branch).commit.sha
+
+function get_shas(turing_path, branch_names...)
+    if length(branch_names) == 1
+        branches = ["master", branch_names[1]]
+    else
+        branches = [branch_names...]
+    end
+    repo = GitHub.Repo(turing_path)
+    shas = GitHub.branch.((repo,), branches)
+    return shas
+end
+get_result_dir(shas) = join(snipsha.(shas), "_")
+
+gitcurrentbranch() = strip(read(`git branch | grep \* | cut -d ' ' -f2`, String))
+gitcurrentbranch(path) = cd(gitcurrentbranch, path)
+
+function changebranch(f::Function, repopath, branch)
+    currentbranch = gitcurrentbranch(repopath)
+    gitcheckout!(repopath, branch)
+    f()
+    gitcheckout!(repopath, currentbranch)
+end
+
+function local_benchmark(turing_path, branch_names...)
+    @assert length(branch_names) > 0
+    if length(branch_names) == 1
+        branches = ["master", branch_names[1]]
+    else
+        branches = [branch_names...]
+    end
+    # Get the 2 shas of Turing and make the dir name in TuringBenchmarks
+    shas = get_shas(turing_path, branches...)
+    bench_result_dir = get_result_dir(shas)
+    result_path = local_setup(bench_result_dir)
+    
+    cd(result_path) do 
+        for (branch, sha) in zip(branches, shas)
+            branch ∈ gitbranches(turing_path, "-l") || throw("Branch $branch not found.")
+            changebranch(turing_path, branch) do 
+                isdir(sha) || mkdir(sha)
+                for (root, dirs, files) in walkdir(BENCH_DIR)
+                    for file in files
+                        if tobenchmark(file) && file ∉ inactive_benchmarks && splitext(file)[2] == ".jl"
+                            filepath = abspath(joinpath(root, file))
+                            benchmark_files([filepath], send=send, save_path=sha)
+                        end
+                    end
+                end
+            end
+        end
+        write_report!("report.md", shas)
+    end
+
+    return joinpath(pwd(), "report.md")
+end
+
+function local_setup(sink_branch_name)
+    # Just use the current TuringBenchmarks folder
+    temp_dir = splitdir(@__DIR__)[1]
+    results_dir = joinpath(temp_dir, "benchmark_results")
+    isdir(results_dir) || mkdir(results_dir)
+    cd(results_dir) do
+        isdir(sink_branch_name) || mkdir(sink_branch_name)
+    end
+    return joinpath(results_dir, sink_branch_name)
+end
 
 end # module

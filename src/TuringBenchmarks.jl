@@ -2,8 +2,6 @@ module TuringBenchmarks
 
 __precompile__(false)
 
-include("turingbot.jl")
-
 using Statistics, Dates, HTTP, JSON
 
 export  benchmark_models,
@@ -13,11 +11,46 @@ export  benchmark_models,
         build_logd, 
         send_log,
         print_log, 
-        getbenchpath
-        #vis_topic_res
+        getbenchpath,
+        tobenchmark
 
 # using StatPlots
 # using DataFrames
+
+broken_benchmarks = [# Errors
+	                "dyes.run.jl",
+                	"kid.run.jl",
+                	"negative_binomial.run.jl",
+	                "normal-mixture.run.jl",
+                    "school8.run.jl",
+                    "binomial.run.jl",
+                    "binormal.run.jl",
+                    "MoC.run.jl",
+                    "sv.run.jl",
+                    "gdemo-geweke.run.jl",
+                    "profile.jl", # segfaults
+                    # Freezes
+                    "lda.run.jl"]
+
+# Don't have send_log
+inactive_benchmarks = ["binomial.run.jl",
+                        "change-point.jl",
+                        "dyes.run.jl",
+                        "gdemo-geweke.run.jl",
+                        "negative_binomial.run.jl",
+                        "normal-loc.run.jl",
+                        "ode.jl",
+                        "optimization.jl",
+                        "profile.jl",
+                        "sv.run.jl"]
+
+function tobenchmark(filename)
+    if filename ∈ broken_benchmarks || occursin("stan", filename)
+        return false
+    else
+        return true
+    end
+end
 
 const LOG_URL = "http://github.turingbenchmarks.ultrahook.com"
 const MODELS_DIR = abspath(joinpath(@__DIR__, "..", "models"))
@@ -196,11 +229,11 @@ function gen_mkd_table_for_commit(commit)
     mkd
 end
 
-function benchmark_models(model_list=default_model_list; send = true)
+function benchmark_models(model_list=default_model_list; send = true, save_path = "")
     println("Turing benchmarking started.")
     for model in model_list
         try
-            _benchmark_model(model, send=send)
+            _benchmark_model(model, send=send, save_path=save_path)
         catch err
             println("Error running the benchmark $model.")
             if :msg in fieldnames(typeof(err))
@@ -212,11 +245,11 @@ function benchmark_models(model_list=default_model_list; send = true)
     println("Turing benchmarking completed.")
 end
 
-function benchmark_files(file_list=default_model_list; send = true)
+function benchmark_files(file_list=default_model_list; send = true, save_path = "")
     println("Turing benchmarking started.")    
     for file in file_list
         try
-            _benchmark_file(file, send = send)
+            _benchmark_file(file, send=send, save_path=save_path)
         catch err
             println("Error running the benchmark $file.")
             if :msg in fieldnames(typeof(err))
@@ -228,16 +261,16 @@ function benchmark_files(file_list=default_model_list; send = true)
     println("Turing benchmarking completed.")
 end
 
-function _benchmark_model(modelname; send = true)
+function _benchmark_model(modelname; send = true, save_path = "")
     println("Benchmarking `$modelname` ... ")
-    _benchmark_file(modelname, send=send, model = true)
+    _benchmark_file(modelname, send=send, model=true, save_path=save_path)
     println("`$modelname` ✓")
     return 
 end
 
 getbenchpath(modelname) = joinpath(TuringBenchmarks.BENCH_DIR, "$(modelname).run.jl")
 
-function _benchmark_file(fileormodel; send = true, model = false)
+function _benchmark_file(fileormodel; send = true, model = false, save_path = "")
     if model
         include_arg = "TuringBenchmarks.getbenchpath(\"$fileormodel\")"
     else
@@ -247,12 +280,14 @@ function _benchmark_file(fileormodel; send = true, model = false)
     end
     julia_path = joinpath(Sys.BINDIR, Base.julia_exename())
     send_code = send ? "TuringBenchmarks.SEND_SUMMARY[] = true;" : "TuringBenchmarks.SEND_SUMMARY[] = false"
+    save_code = (save_path == "") ? "" : "cd(()->write(getfilename(logd)*\".json\", JSON.json(logd)*\"\\n\"), $save_path)"
 
     job = `$julia_path -e
                 "using CmdStan, Turing, TuringBenchmarks;
                 CmdStan.set_cmdstan_home!(TuringBenchmarks.CMDSTAN_HOME);
                 $send_code
-                include($include_arg);"`
+                include($include_arg);
+                $save_code"`
     println(job); run(job)
     !model && println("`$filepath` ✓")
     return 
@@ -286,5 +321,7 @@ function vis_topic_res(samples, K, V, avg_range)
     return @df df plot(:Word, [:Topic], colour = [:Probability])
 end
 =#
+
+include("turingbot.jl")
 
 end #module
