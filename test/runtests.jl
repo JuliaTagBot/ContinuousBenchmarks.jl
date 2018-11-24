@@ -1,8 +1,12 @@
-using Pkg, HTTP, JSON, TuringBenchmarks
+using Pkg
+Pkg.develop("Turing")
+Pkg.activate(splitdir(@__DIR__)[1])
+Pkg.instantiate()
+
+using HTTP, JSON, TuringBenchmarks
 
 using TuringBenchmarks: snipsha, getturingpath, LOG_URL
 
-Pkg.develop("Turing")
 juliaexe_path = joinpath(Sys.BINDIR, Base.julia_exename())
 shas_filepath = abspath(joinpath("..", "src", "bench_shas.txt"))
 if isfile(shas_filepath) && length(readlines(shas_filepath)) > 0
