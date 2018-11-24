@@ -4,12 +4,12 @@ This package has some benchmarking scripts for Turing. All models used here can 
 
 Some data is generated via simulations found in the `simulations` folder. This data is generated when the package is built. When the package is built, `cmdstan` is also downloaded and setup where the URL can be accessed using `TuringBenchmarks.CMDSTAN_HOME`.
 
-## How to benchmark locally?
+## How to benchmark Turing locally?
 
 To locally benchmark 2 Turing branches:
 
-1. Make sure all the changes to both branches and the active branch are committed (or they will be lost!).
-2. Run:
+1. Make sure all the changes to the active Turing branch are committed (or they will be lost!).
+2. To benchmark the `master` and `new_branch` branches, run:
 ```julia
 using TuringBenchmarks.TuringBot
 
