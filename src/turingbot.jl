@@ -323,7 +323,14 @@ function getfilename(data)
     filename
 end
 
-function write_report!(filename, shas, branch_name="")
+function write_report!(filename, shas, branch_name::String)
+    _write_report!(filename, [], shas, branch_name)
+end
+function write_report!(filename, branches::Vector, shas::Vector)
+    @assert length(branches) == length(shas)
+    _write_report!(filename, branches, shas, "")
+end
+function _write_report!(filename, branches, shas, branch_name)
     path_pairs = []
     table = "| ID | time ratio |\n"
     table *= "|----|------------|\n"
@@ -406,8 +413,8 @@ function write_report!(filename, shas, branch_name="")
 ## Job properties
 
 *Turing Commits:*
-- *pr:* $(shas[2])
-- *master:* $(shas[1])
+- *$(branch_name == "" ? branches[2] : "pr"):* $(shas[2])
+- *$(branch_name == "" ? branches[1] : "master"):* $(shas[1])
 
 *TuringBenchmarks commit:* $bench_commit
 
@@ -491,7 +498,7 @@ function local_benchmark(branch_names::Tuple, turing_path=getturingpath())
                 end
             end
         end
-        write_report!("report.md", shas)
+        write_report!("report.md", branches, shas)
     end
 
     return joinpath(pwd(), "report.md")
