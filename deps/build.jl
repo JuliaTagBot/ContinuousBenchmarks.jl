@@ -22,7 +22,8 @@ else
     write(joinpath("..", "src", "cmdstan_home.jl"), "cmdstan_home() = $(ENV["CMDSTAN_HOME"])")
 end
 
-Pkg.add(["FileIO", "JLD2", "Turing"])
+Pkg.add(["FileIO", "JLD2"])
+Pkg.develop("Turing")
 
 TuringBenchmarks.SEND_SUMMARY[] = false
 

@@ -28,4 +28,4 @@ Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [targets]
-test = ["Pkg", "CmdStan", "DelimitedFiles", "FileIO", "ForwardDiff", "Gadfly", "JLD2", "Mamba", "Plots", "Profile", "ProfileView", "StatsBase", "StatsFuns", "Test", "Turing", "UnicodePlots"]
+test = ["CmdStan", "DelimitedFiles", "FileIO", "ForwardDiff", "Gadfly", "JLD2", "Mamba", "Plots", "Profile", "ProfileView", "StatsBase", "StatsFuns", "Test", "Turing", "UnicodePlots"]
