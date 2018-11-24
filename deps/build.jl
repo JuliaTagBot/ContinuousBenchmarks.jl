@@ -1,3 +1,5 @@
+using Pkg, TuringBenchmarks
+
 # Download and uncompress cmdstan
 if !haskey(ENV, "CMDSTAN_HOME") || ENV["CMDSTAN_HOME"] == ""
     # Make the cmdstan home directory
@@ -20,8 +22,8 @@ else
     write(joinpath("..", "src", "cmdstan_home.jl"), "cmdstan_home() = $(ENV["CMDSTAN_HOME"])")
 end
 
-using Pkg, TuringBenchmarks
-Pkg.add(["FileIO", "JLD2", "Turing"])
+Pkg.add(["FileIO", "JLD2"])
+Pkg.develop("Turing")
 
 TuringBenchmarks.SEND_SUMMARY[] = false
 

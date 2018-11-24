@@ -8,11 +8,12 @@ matrix:
 
 notifications:
     email: false
+
 script:
   - julia --check-bounds=yes -e 'using Pkg;
-                                 Pkg.clone(pwd()); 
-                                 Pkg.build("TuringBenchmarks"); 
-                                 Pkg.test("TuringBenchmarks"; coverage=true)'
+                              Pkg.build("TuringBenchmarks"); 
+                              Pkg.test("TuringBenchmarks"; coverage=true)'
+
 after_success:
   - julia -e 'cd(Pkg.dir("TuringBenchmarks")); Pkg.add("Coverage");
               using Coverage; Coveralls.submit(process_folder())'
