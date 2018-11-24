@@ -2,6 +2,8 @@ module TuringBenchmarks
 
 __precompile__(false)
 
+include("turingbot.jl")
+
 using Statistics, Dates, HTTP, JSON
 
 export  benchmark_models,
