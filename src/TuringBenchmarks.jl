@@ -246,7 +246,7 @@ function benchmark_models(model_list=default_model_list; send = true, save_path 
 end
 
 function benchmark_files(file_list=default_model_list; send = true, save_path = "")
-    println("Turing benchmarking started.")    
+    println("Turing benchmarking started.")
     for file in file_list
         try
             _benchmark_file(file, send=send, save_path=save_path)
@@ -280,10 +280,12 @@ function _benchmark_file(fileormodel; send = true, model = false, save_path = ""
     end
     julia_path = joinpath(Sys.BINDIR, Base.julia_exename())
     send_code = send ? "TuringBenchmarks.SEND_SUMMARY[] = true;" : "TuringBenchmarks.SEND_SUMMARY[] = false"
-    save_code = (save_path == "") ? "" : "cd(()->write(getfilename(logd)*\".json\", JSON.json(logd)*\"\\n\"), $save_path)"
+    save_code = (save_path == "") ? "" : "using JSON; cd(()->write(TuringBenchmarks.TuringBot.getfilename(logd)*\".json\", JSON.json(logd)*\"\\n\"), \"$save_path\")"
 
+    project_dir = splitdir(@__DIR__)[1]
     job = `$julia_path -e
-                "using CmdStan, Turing, TuringBenchmarks;
+                "using Pkg; Pkg.activate(\"$project_dir\"); Pkg.instantiate()
+                using CmdStan, Turing, TuringBenchmarks;
                 CmdStan.set_cmdstan_home!(TuringBenchmarks.CMDSTAN_HOME);
                 $send_code
                 include($include_arg);
