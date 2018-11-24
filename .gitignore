@@ -3,3 +3,4 @@ cmdstan/
 deps/build.log
 data/stan-data/ldastandata*
 tmp/
+test/ldamodel.svg
