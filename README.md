@@ -25,7 +25,7 @@ There are a number of ways to contribute to `TuringBenchmarks`:
 3. Fix and activate the Stan benchmarks, any file in [benchmarks directory](https://github.com/TuringLang/TuringBenchmarks/tree/master/benchmarks) with `stan` in its name.
 4. Add new benchmarks.
 
-Both the broken and inactive benchmark file names can be found in https://github.com/TuringLang/TuringBenchmarks/blob/master/test/benchmarks.jl. The actual files can be found in https://github.com/TuringLang/TuringBenchmarks/tree/master/benchmarks.
+Both the broken and inactive benchmark file names can be found [here](https://github.com/TuringLang/TuringBenchmarks/blob/94eb4ba3740bf7b025a41947a37c5df93785a72c/src/TuringBenchmarks.jl#L20), while the actual files can be found [here](https://github.com/TuringLang/TuringBenchmarks/tree/master/benchmarks).
 
 ## Guidelines for new benchmarks
 
