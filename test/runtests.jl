@@ -1,5 +1,5 @@
 using Pkg
-Pkg.develop("Turing")
+Pkg.develop("https://github.com/TuringLang/Turing.jl")
 Pkg.activate(splitdir(@__DIR__)[1])
 Pkg.instantiate()
 
