@@ -1,4 +1,5 @@
 using Pkg
+println("Active project: ", Base.active_project())
 Pkg.develop("https://github.com/TuringLang/Turing.jl")
 Pkg.activate(splitdir(@__DIR__)[1])
 Pkg.instantiate()
