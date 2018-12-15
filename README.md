@@ -4,12 +4,12 @@ This package has some benchmarking scripts for Turing. All models used here can 
 
 Some data is generated via simulations found in the `simulations` folder. This data is generated when the package is built. When the package is built, `cmdstan` is also downloaded and setup where the URL can be accessed using `TuringBenchmarks.CMDSTAN_HOME`.
 
-## How to benchmark locally?
+## How to benchmark Turing locally?
 
 To locally benchmark 2 Turing branches:
 
-1. Make sure all the changes to both branches and the active branch are committed (or they will be lost!).
-2. Run:
+1. Make sure all the changes to the active Turing branch are committed (or they will be lost!).
+2. To benchmark the `master` and `new_branch` branches, run:
 ```julia
 using TuringBenchmarks.TuringBot
 
@@ -25,7 +25,7 @@ There are a number of ways to contribute to `TuringBenchmarks`:
 3. Fix and activate the Stan benchmarks, any file in [benchmarks directory](https://github.com/TuringLang/TuringBenchmarks/tree/master/benchmarks) with `stan` in its name.
 4. Add new benchmarks.
 
-Both the broken and inactive benchmark file names can be found in https://github.com/TuringLang/TuringBenchmarks/blob/master/test/benchmarks.jl. The actual files can be found in https://github.com/TuringLang/TuringBenchmarks/tree/master/benchmarks.
+Both the broken and inactive benchmark file names can be found [here](https://github.com/TuringLang/TuringBenchmarks/blob/94eb4ba3740bf7b025a41947a37c5df93785a72c/src/TuringBenchmarks.jl#L20), while the actual files can be found [here](https://github.com/TuringLang/TuringBenchmarks/tree/master/benchmarks).
 
 ## Guidelines for new benchmarks
 
