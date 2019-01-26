@@ -8,6 +8,9 @@ using ..TuringBenchmarks: tobenchmark, BENCH_DIR, inactive_benchmarks, benchmark
 # Authentication
 const username = get(ENV, "GITHUB_USERNAME", "")
 const authtoken = get(ENV, "GITHUB_AUTH", "")
+if username == "" || authtoken == ""
+    @warn("The Github authentication is not setup properly. Please set ENV[\"GITHUB_USERNAME\"] and ENV[\"GITHUB_AUTH\"] with your Github username and access token respectively.")
+end
 const auth = GitHub.authenticate(authtoken)
 
 const sourcerepo_name = "TuringLang/Turing.jl"
@@ -359,7 +362,7 @@ function _write_report!(filename, branches, shas, branch_name)
         end
     end
     bench_commit = ""
-    sinkrepo_url = repo(Repo(sinkrepo_name)).html_url.uri
+    sinkrepo_url = repo(Repo(sinkrepo_name), auth=auth).html_url.uri
     if branch_name != ""
         report_base_url = join([sinkrepo_url, "tree", branch_name, "benchmark_results", branch_name], "/")
         commit1_url = join([report_base_url, snipsha(shas[1])], "/")
