@@ -4,3 +4,6 @@ deps/build.log
 data/stan-data/ldastandata*
 tmp/
 test/ldamodel.svg
+config/stop-server
+config/*.priv.toml
+config/*.pem

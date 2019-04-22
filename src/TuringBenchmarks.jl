@@ -17,6 +17,9 @@ export  benchmark_models,
 # using StatPlots
 # using DataFrames
 
+include("AppServer.jl")
+
+
 broken_benchmarks = [# Errors
 	                "dyes.run.jl",
                 	"kid.run.jl",
