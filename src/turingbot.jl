@@ -3,14 +3,13 @@ module TuringBot
 # Inspired from https://github.com/JuliaCI/Nanosoldier.jl
 
 using GitHub, HTTP, Sockets, JSON
-using ..TuringBenchmarks: tobenchmark, BENCH_DIR, inactive_benchmarks, benchmark_files, getturingpath
+using ..TuringBenchmarks: tobenchmark, BENCH_DIR, inactive_benchmarks,
+    benchmark_files, getturingpath
+using ..Config
 
 # Authentication
-const username = get(ENV, "GITHUB_USERNAME", "")
-const authtoken = get(ENV, "GITHUB_AUTH", "")
-if username == "" || authtoken == ""
-    @warn("The Github authentication is not setup properly. Please set ENV[\"GITHUB_USERNAME\"] and ENV[\"GITHUB_AUTH\"] with your Github username and access token respectively.")
-end
+const username = Config.get_config("github.user")
+const authtoken = Config.get_config("github.token")
 const auth = GitHub.authenticate(authtoken)
 
 const sourcerepo_name = "TuringLang/Turing.jl"

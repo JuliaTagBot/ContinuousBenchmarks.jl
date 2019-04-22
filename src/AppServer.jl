@@ -5,8 +5,9 @@ using GitHub
 using HTTP
 using Pkg
 
+using ..Config
+
 const event_queue = Channel{Any}(1024)
-const config = Dict{String, Any}()
 const httpsock = Ref{Sockets.TCPServer}()
 
 function handle_events(e)
@@ -51,17 +52,17 @@ function request_processor()
 end
 
 function github_webhook(
-    http_ip=config["server"]["http_ip"],
-    http_port=get(config["server"], "http_port", parse(Int, get(ENV, "PORT", "8001")))
+    http_ip=Config.get_config("server.http_ip"),
+    http_port=Config.get_config("server.http_port")
 )    
-    auth = GitHub.JWTAuth(config["github"]["app_id"], config["github"]["priv_pem"])
+    auth = GitHub.JWTAuth(Config.get_config("github.app_id"), Config.get_config("github.priv_pem"))
     trigger = Regex(".*")
     listener = GitHub.CommentListener(
         comment_handler,
         trigger;
         check_collab=false,
         auth=auth,
-        secret=config["github"]["secret"])
+        secret=Config.get_config("github.secret"))
 
     httpsock[] = Sockets.listen(IPv4(http_ip), http_port)
 
@@ -95,14 +96,12 @@ function status_monitor()
 end
 
 function main()
-    if isempty(ARGS)
+    if isempty(get(ENV, "ENV", ""))
         println("Usage: \n\t" *
-                "julia -e 'using TuringBenchmarks; TuringBenchmarks.AppServer.main()' " *
-                "<configuration>")
+                "export ENV=dev|prod|...\n\t"*
+                "julia -e 'using TuringBenchmarks; TuringBenchmarks.AppServer.main()' ")
         return
     end
-
-    merge!(config, Pkg.TOML.parsefile(ARGS[1]))
 
     @info("Starting server...")
     handler_task = @async request_processor()
