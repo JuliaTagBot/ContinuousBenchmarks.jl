@@ -1,11 +1,17 @@
+# -*- mode: conf -*-
 [server]
 http_ip = "0.0.0.0"
 http_port = 5900
+log_level = "info" # debug|info|warn|error
 stop_file = "config/stop-server"
 
 [github]
+# for main repo
+app_repo = "TuringLang/TuringBenchmarks"
+app_repo_bmbr = "master"
+
 # for App
-app_id = 1000 
+app_id = 1000
 priv_pem = "config/xxxx.pem"
 secret = "the webhook secret"
 

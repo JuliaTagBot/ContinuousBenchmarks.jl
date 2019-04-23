@@ -3,22 +3,61 @@ module AppServer
 using Sockets
 using GitHub
 using HTTP
+using Base64
 using Pkg
+using Logging
 
 using ..Config
+using ..Utils
 
 const event_queue = Channel{Any}(1024)
 const httpsock = Ref{Sockets.TCPServer}()
 
+const app_repo = Config.get_config("github.app_repo")
+const app_repo_bmbr = Config.get_config("github.app_repo_bmbr")
+const bot_user = Config.get_config("github.user")
+const bot_auth = GitHub.authenticate(Config.get_config("github.token"))
+
+
+function bm_from_comment(data)
+    comment_url = data.payload["comment"]["html_url"]
+    comment_body = data.payload["comment"]["body"]
+    issue_no = data.payload["issue"]["number"]
+    issue_url = data.payload["issue"]["html_url"]
+    issue_repo = data.repository
+
+    branches = benchmark_branches(comment_body)
+    if isempty(branches)
+        params = Dict("body" => "Yes Sir?")
+        create_comment(issue_repo, issue_no, :issue; params=params, auth=bot_auth)
+        return
+    end
+    name = bm_name(branches)
+    content = base64encode(Utils.bm_file_content(issue_url, comment_url, branches))
+    params = Dict("branch" => app_repo_bmbr,
+                  "message" => name,
+                  "content" => content)
+
+    commit = GitHub.create_file(app_repo, "jobs/$(name).toml"; params=params, auth=bot_auth)
+
+    commit_id = commit["commit"].sha
+    params = Dict("title"=>name, "body"=>Utils.bm_issue_content(commit_id, comment_url))
+    issue = create_issue(app_repo; params=params, auth=bot_auth)
+
+    params = Dict("body" => Utils.bm_reply0_content(issue.html_url.uri))
+    create_comment(issue_repo, issue_no, :issue; params=params, auth=bot_auth)
+end
+
 function handle_events(e)
-    # TODO
-    @info("Handle Event: ", e)
+    @debug("Handle Event: ", e)
+    e.kind == "issue_comment" && return bm_from_comment(e)
 end
 
 function comment_handler(event::WebhookEvent, phrase::RegexMatch)
     global event_queue
     @debug("Received event for $(event.repository.full_name), phrase: $phrase")
     push!(event_queue, event)
+    @debug("event pushed")
     return HTTP.Messages.Response(200)
 end
 
@@ -41,10 +80,15 @@ function recover(name, keep_running, do_action, handle_exception;
             end
         end
     end
+    @warn("Stopped", name)
 end
 
 function request_processor()
-    do_action() = handle_events(take!(event_queue))
+    do_action() = begin
+        event = take!(event_queue)
+        tsk = @task handle_events(event)
+        schedule(tsk)
+    end
     handle_exception(ex) =
         (isa(ex, InvalidStateException) && (ex.state == :closed)) ? :exit : :continue
     keep_running() = isopen(event_queue)
@@ -54,14 +98,15 @@ end
 function github_webhook(
     http_ip=Config.get_config("server.http_ip"),
     http_port=Config.get_config("server.http_port")
-)    
-    auth = GitHub.JWTAuth(Config.get_config("github.app_id"), Config.get_config("github.priv_pem"))
-    trigger = Regex(".*")
+)
+    app_auth = GitHub.JWTAuth(
+        Config.get_config("github.app_id"), Config.get_config("github.priv_pem"))
+    trigger = Regex("@TuringBenchBot")
     listener = GitHub.CommentListener(
         comment_handler,
         trigger;
         check_collab=false,
-        auth=auth,
+        auth=app_auth,
         secret=Config.get_config("github.secret"))
 
     httpsock[] = Sockets.listen(IPv4(http_ip), http_port)
@@ -102,6 +147,8 @@ function main()
                 "julia -e 'using TuringBenchmarks; TuringBenchmarks.AppServer.main()' ")
         return
     end
+
+    global_logger(SimpleLogger(stdout, Config.log_level()))
 
     @info("Starting server...")
     handler_task = @async request_processor()

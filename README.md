@@ -1,8 +1,32 @@
-# TuringBenchmarks 
+# TuringBenchmarks
 
-This package has some benchmarking scripts for Turing. All models used here can be found in the `models` folder, all data can be found in the `data` folder, and all benchmarking scripts are in the `benchmarks` folder. 
+This package has some benchmarking scripts for Turing. All models used
+here can be found in the `models` folder, all data can be found in the
+`data` folder, and all benchmarking scripts are in the `benchmarks`
+folder.
 
-Some data is generated via simulations found in the `simulations` folder. This data is generated when the package is built. When the package is built, `cmdstan` is also downloaded and setup where the URL can be accessed using `TuringBenchmarks.CMDSTAN_HOME`.
+Some data is generated via simulations found in the `simulations`
+folder. This data is generated when the package is built. When the
+package is built, `cmdstan` is also downloaded and setup where the URL
+can be accessed using `TuringBenchmarks.CMDSTAN_HOME`.
+
+## The Bot and the App
+
+- There are a TuringBenchBot GitHub Account
+  (https://github.com/TuringBenchBot) and a TuringBenchBot GitHub App
+  (https://github.com/apps/turingbenchbot);
+- When you want to do a benchmark, at the GitHub Account in a comment,
+  tell it the target branches, e.g. `@TuringBenchBot bm("master",
+  "branch1")`, the App will receive the instruction;
+- While receiving the benchmark instruction,
+  - the App will create a new commit in this repository, then the
+    commit will trigger travis CI to run the benchmark;
+  - An issue on this repository will be opened to
+    record the information of the benchmark job;
+  - A comment reply to the issue where you at the bot will also be
+    filed to tell you that a benchemark will be run on Travis CI;
+- When the benchemark job is done, Travis CI will commit the report to
+  this repository;
 
 ## How to benchmark Turing locally?
 
@@ -43,7 +67,7 @@ Both the broken and inactive benchmark file names can be found [here](https://gi
 ## Setup
 
 1. Register on the ultrahook website to get an API key and username.
-2. Download and install [Ruby](https://www.ruby-lang.org/en/downloads/). 
+2. Download and install [Ruby](https://www.ruby-lang.org/en/downloads/).
 3. Download [RubyGems](https://rubygems.org/pages/download) and extract the folder rubygems-x.x.x.
 4. In a command prompt, call `~/Rubyxx-xxx/bin/ruby rubygems-x.x.x/setup.rb`.
 5. Run `~/Rubyx-xxx/bin/gem ultrahook`

@@ -17,6 +17,7 @@ export  benchmark_models,
 # using StatPlots
 # using DataFrames
 
+include("utils.jl")
 include("config.jl")
 include("AppServer.jl")
 

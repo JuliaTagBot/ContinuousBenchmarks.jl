@@ -6,4 +6,5 @@ tmp/
 test/ldamodel.svg
 config/stop-server
 config/*.priv.toml
+config/*.prod.toml
 config/*.pem

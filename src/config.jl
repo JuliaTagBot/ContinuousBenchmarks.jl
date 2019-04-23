@@ -1,5 +1,6 @@
 module Config
 
+using Logging
 using Pkg
 
 const config = Dict{String, Any}()
@@ -9,18 +10,27 @@ function load(path::String)
 end
 
 function load()
-    env = get(ENV, "ENV", "dev")
-    load((@__DIR__) * "/../config/app.$(env).toml")
+    env = get(ENV, "ENV", "priv")
+    load(pwd() * "/config/app.$(env).toml")
 end
 
-function get_config(key::String)
+function get_config(key::String, default=nothing)
     length(config) == 0 && load()
     keys = split(key, ".")
     ret = config
     for kitem in keys
         ret = get(ret, kitem, Dict())
     end
-    isa(ret, Dict) && length(ret) == 0 ? nothing : ret
+    isa(ret, Dict) && length(ret) == 0 ? default : ret
 end
+
+function log_level()
+    log_level_str = lowercase(get_config("server.log_level", "debug"))
+
+    (log_level_str == "debug") ? Logging.Debug :
+    (log_level_str == "info")  ? Logging.Info  :
+    (log_level_str == "warn")  ? Logging.Warn  : Logging.Error
+end
+
 
 end
