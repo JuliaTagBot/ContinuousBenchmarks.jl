@@ -10,6 +10,13 @@ folder. This data is generated when the package is built. When the
 package is built, `cmdstan` is also downloaded and setup where the URL
 can be accessed using `TuringBenchmarks.CMDSTAN_HOME`.
 
+## Install The App:
+
+[![install](https://img.shields.io/badge/-install%20app-blue.svg)](https://github.com/apps/turingbenchbot/installations/new)
+
+- Install the app to your repository;
+- Add @TuringBenchBot as a collaborator if your repo is private.
+
 ## The Bot and the App
 
 - There are a TuringBenchBot GitHub Account
@@ -17,16 +24,18 @@ can be accessed using `TuringBenchmarks.CMDSTAN_HOME`.
   (https://github.com/apps/turingbenchbot);
 - When you want to do a benchmark, at the GitHub Account in a comment,
   tell it the target branches, e.g. `@TuringBenchBot bm("master",
-  "branch1")`, the App will receive the instruction;
+  "branch1")`, the app will receive the instruction;
 - While receiving the benchmark instruction,
-  - the App will create a new commit in this repository, then the
+  - the app will create a new commit in this repository, then the
     commit will trigger travis CI to run the benchmark;
-  - An issue on this repository will be opened to
-    record the information of the benchmark job;
-  - A comment reply to the issue where you at the bot will also be
-    filed to tell you that a benchemark will be run on Travis CI;
+  - An issue on this repository will be opened to track the benchmark
+    job;
+  - A comment reply to the issue where you `@` the bot will also be
+    filed to tell you that a benchemark job will be run on Travis CI;
 - When the benchemark job is done, Travis CI will commit the report to
-  this repository;
+  this repository, then the tracking issue will be closed with a
+  comment. A reply will also be make at where you trigger the bot.
+
 
 ## How to benchmark Turing locally?
 

@@ -50,5 +50,22 @@ Hi Sir, a new benchmark job will be dispatched soon at your command,
 you can track it here: $(issue_url).
 """
 
+bm_issue_close_content(commit_id, report_url) = """
+The benchmark job is finished.
+
+The report is committed in this commit: $commit_id.
+
+You can see the report at $report_url.
+"""
+
+bm_reply1_content(bm_name, repo, commit_id, report_url) = """
+Hi Sir,
+
+The benchmark [$bm_name] job is finished.
+
+The report is committed in this commit: $repo@$commit_id.
+
+You can see the report at $report_url.
+"""
 
 end

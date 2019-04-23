@@ -6,11 +6,11 @@ using Statistics, Dates, HTTP, JSON
 
 export  benchmark_models,
         benchmark_files,
-        @tbenchmark, 
-        get_stan_time, 
-        build_logd, 
+        @tbenchmark,
+        get_stan_time,
+        build_logd,
         send_log,
-        print_log, 
+        print_log,
         getbenchpath,
         tobenchmark
 
@@ -20,7 +20,7 @@ export  benchmark_models,
 include("utils.jl")
 include("config.jl")
 include("AppServer.jl")
-
+include("reporter.jl")
 
 broken_benchmarks = [# Errors
 	                "dyes.run.jl",
@@ -190,13 +190,13 @@ end
 
 function send_log(logd::Dict, monitor=[])
     benchmarks_commit_str = ""
-    cd(splitdir(Base.@__DIR__)[1]) do 
+    cd(splitdir(Base.@__DIR__)[1]) do
         benchmarks_commit_str = getcommit()
     end
     @assert benchmarks_commit_str != ""
 
     turing_commit_str = ""
-    cd(getturingpath()) do 
+    cd(getturingpath()) do
         turing_commit_str = getcommit()
     end
     @assert turing_commit_str != ""
@@ -270,7 +270,7 @@ function _benchmark_model(modelname; send = true, save_path = "")
     println("Benchmarking `$modelname` ... ")
     _benchmark_file(modelname, send=send, model=true, save_path=save_path)
     println("`$modelname` ✓")
-    return 
+    return
 end
 
 getbenchpath(modelname) = joinpath(TuringBenchmarks.BENCH_DIR, "$(modelname).run.jl")
@@ -297,7 +297,7 @@ function _benchmark_file(fileormodel; send = true, model = false, save_path = ""
                 $save_code"`
     println(job); run(job)
     !model && println("`$filepath` ✓")
-    return 
+    return
 end
 
 #=
