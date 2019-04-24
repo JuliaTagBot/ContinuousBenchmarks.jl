@@ -7,6 +7,7 @@ const config = Dict{String, Any}()
 
 function load(path::String)
     if isfile(path)
+        @info "*** Using config file: $path"
         merge!(config, Pkg.TOML.parsefile(path))
         return
     end
