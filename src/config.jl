@@ -6,12 +6,20 @@ using Pkg
 const config = Dict{String, Any}()
 
 function load(path::String)
-    merge!(config, Pkg.TOML.parsefile(path))
+    if isfile(path)
+        merge!(config, Pkg.TOML.parsefile(path))
+        return
+    end
+    @warn "config file $path not found."
 end
 
 function load()
-    env = get(ENV, "ENV", "priv")
-    load(pwd() * "/config/app.$(env).toml")
+    path = get(ENV, "TBB_CONFIG", nothing)
+    if path == nothing
+        env = get(ENV, "ENV", "priv")
+        path = pwd() * "/config/app.$(env).toml"
+    end
+    load(path)
 end
 
 function get_config(key::String, default=nothing)

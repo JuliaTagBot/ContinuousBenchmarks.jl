@@ -1,0 +1,4 @@
+[github]
+# for main repr: where the bm_info lies and where to report
+app_repo = "TuringLang/TuringBenchmarks"
+app_repo_bmbr = "master"

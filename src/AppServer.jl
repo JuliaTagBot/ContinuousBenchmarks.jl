@@ -9,6 +9,7 @@ using Logging
 
 using ..Config
 using ..Utils
+using ..Runner
 
 const event_queue = Channel{Any}(1024)
 const httpsock = Ref{Sockets.TCPServer}()
@@ -16,16 +17,17 @@ const httpsock = Ref{Sockets.TCPServer}()
 const app_repo = Config.get_config("github.app_repo")
 const app_repo_bmbr = Config.get_config("github.app_repo_bmbr")
 const bot_user = Config.get_config("github.user")
-const bot_auth = GitHub.authenticate(Config.get_config("github.token"))
-
 
 function bm_from_comment(data)
+    bot_auth = GitHub.authenticate(Config.get_config("github.token"))
+
     comment_url = data.payload["comment"]["html_url"]
     comment_body = data.payload["comment"]["body"]
     issue_no = data.payload["issue"]["number"]
     issue_url = data.payload["issue"]["html_url"]
     issue_repo = data.repository
 
+    occursin("@TuringBenchBot", comment_body) || return
     branches = benchmark_branches(comment_body)
     if isempty(branches)
         params = Dict("body" => "Yes Sir?")
@@ -51,6 +53,16 @@ end
 function handle_events(e)
     @debug("Handle Event: ", e)
     e.kind == "issue_comment" && return bm_from_comment(e)
+    e.kind == "push" && Config.get_config("server.bm_runner") == "self" &&
+        return Runner.trigger(e)
+end
+
+function event_handler(event::WebhookEvent)
+    global event_queue
+    @debug("Received event for $(event.repository.full_name)")
+    push!(event_queue, event)
+    @debug("event pushed")
+    return HTTP.Messages.Response(200)
 end
 
 function comment_handler(event::WebhookEvent, phrase::RegexMatch)
@@ -101,21 +113,26 @@ function github_webhook(
 )
     app_auth = GitHub.JWTAuth(
         Config.get_config("github.app_id"), Config.get_config("github.priv_pem"))
-    trigger = Regex("@TuringBenchBot")
-    listener = GitHub.CommentListener(
-        comment_handler,
-        trigger;
-        check_collab=false,
-        auth=app_auth,
-        secret=Config.get_config("github.secret"))
+    # trigger = Regex("@TuringBenchBot")
+    # listener = GitHub.CommentListener(
+    #    comment_handler,
+    #    trigger;
+    #    check_collab=false,
+    #    auth=app_auth,
+    #    secret=Config.get_config("github.secret"))
 
+    listener = GitHub.EventListener(
+        event_handler,
+        auth=app_auth,
+        secret=Config.get_config("github.secret"),
+        events=["push", "issue_comment"])
     httpsock[] = Sockets.listen(IPv4(http_ip), http_port)
 
     do_action() = GitHub.run(listener, httpsock[], IPv4(http_ip), http_port, verbose=true)
     handle_exception(ex) = (isa(ex, Base.IOError) && (ex.code == -103)) ? :exit : :continue
     keep_running() = isopen(httpsock[])
 
-    @info("GitHub Webhook starting...", trigger, http_ip, http_port)
+    @info("GitHub Webhook starting...", http_ip, http_port)
     recover("github_webhook", keep_running, do_action, handle_exception)
 end
 

@@ -93,7 +93,7 @@ function update_remote(shas)
     branch_name = join(snipsha.(shas), "_")
     make_pr = Ref(false)
     errored = Ref(false)
-    
+
     try
         gitcheckout!(temp_dir, branch_name)
     catch err
@@ -105,7 +105,7 @@ function update_remote(shas)
         errored[] = true
     end
     currentdir = pwd()
-    
+
     srcdir = joinpath(temp_dir, "src")
     isdir(srcdir) || mkdir(srcdir)
     cd(srcdir)
@@ -153,17 +153,17 @@ const github_listener = GitHub.EventListener(auth = auth,
     kind, payload, repo = event.kind, event.payload, event.repository
     base_sha = GitHub.branch(repo, "master").commit.sha
 
-    if kind == "issue_comment" && (payload["comment"]["user"]["login"] in maintainers) && 
-        occursin("`@TuringBot benchmark`", payload["comment"]["body"]) 
-        
+    if kind == "issue_comment" && (payload["comment"]["user"]["login"] in maintainers) &&
+        occursin("`@TuringBot benchmark`", payload["comment"]["body"])
+
         if !haskey(event.payload["issue"], "pull_request")
             body = "Benchmarking jobs cannot be triggered from issue comments (only PRs or commits)."
             params = Dict("body"=>body)
             issue = GitHub.issue(repo, payload["issue"]["number"])
-            GitHub.create_comment(repo, issue, :issue, params=params, auth=auth)    
+            GitHub.create_comment(repo, issue, :issue, params=params, auth=auth)
             return HTTP.Response(400)
         end
-        
+
         pr = GitHub.pull_request(repo, payload["issue"]["number"])
         if event.payload["action"] != "created"
             body = "No action taken (submission was from an edit or delete)."
@@ -178,7 +178,7 @@ const github_listener = GitHub.EventListener(auth = auth,
             GitHub.create_comment(repo, pr, :pr, params=params, auth=auth)
             return HTTP.Response(204)
         end
-    
+
         sha = pr.head.sha
         errored, error_msg, make_pr, branch_name = update_remote([base_sha, sha])
         body = ""
@@ -192,7 +192,7 @@ const github_listener = GitHub.EventListener(auth = auth,
             body *= "\n\nCC: @mohamed82008"
         elseif make_pr
             body = "This PR was automatically made by @TuringBenchBot.\n\nCC: @mohamed82008"
-            params = Dict("title" => "Benchmarking $(snipsha(sha)) against $(snipsha(base_sha))", 
+            params = Dict("title" => "Benchmarking $(snipsha(sha)) against $(snipsha(base_sha))",
                 "head" => branch_name, "base" => "master", "body" => body, "maintainer_can_modify" => true)
             try
                 i = find_pr(Repo(sinkrepo_name), params["base"], params["head"])
@@ -395,7 +395,7 @@ function _write_report!(filename, branches, shas, branch_name)
             else
                 @label path2_error
                 table *= "$id | NA |\n"
-            end    
+            end
         else
             @label path1_error
             if path2 != nothing
@@ -473,7 +473,7 @@ function changebranch(f::Function, repopath, branch)
     gitcheckout!(repopath, currentbranch)
 end
 
-function local_benchmark(branch_names::Tuple, turing_path=getturingpath())
+function local_benchmark(branch_names, turing_path=getturingpath())
     @assert length(branch_names) > 0
     if length(branch_names) == 1
         branches = ["master", branch_names[1]]
@@ -484,11 +484,11 @@ function local_benchmark(branch_names::Tuple, turing_path=getturingpath())
     shas = get_shas(turing_path, branches...)
     bench_result_dir = get_result_dir(shas)
     result_path = local_setup(bench_result_dir)
-    
-    cd(result_path) do 
+
+    cd(result_path) do
         for (branch, sha) in zip(branches, shas)
             branch ∈ gitbranches(turing_path, "-l") || throw("Branch $branch not found.")
-            changebranch(turing_path, branch) do 
+            changebranch(turing_path, branch) do
                 isdir(snipsha(sha)) || mkdir(snipsha(sha))
                 for (root, dirs, files) in walkdir(BENCH_DIR)
                     for file in files
@@ -503,7 +503,7 @@ function local_benchmark(branch_names::Tuple, turing_path=getturingpath())
         write_report!("report.md", branches, shas)
     end
 
-    return joinpath(pwd(), "report.md")
+    return joinpath(result_path, "report.md")
 end
 
 function local_setup(sink_branch_name)

@@ -17,37 +17,38 @@ export  benchmark_models,
 # using StatPlots
 # using DataFrames
 
-include("utils.jl")
-include("config.jl")
-include("AppServer.jl")
-include("reporter.jl")
-
 broken_benchmarks = [# Errors
-	                "dyes.run.jl",
-                	"kid.run.jl",
-                	"negative_binomial.run.jl",
-	                "normal-mixture.run.jl",
-                    "school8.run.jl",
-                    "binomial.run.jl",
-                    "binormal.run.jl",
-                    "MoC.run.jl",
-                    "sv.run.jl",
-                    "gdemo-geweke.run.jl",
-                    "profile.jl", # segfaults
-                    # Freezes
-                    "lda.run.jl"]
+                     "dyes.run.jl",
+                     "kid.run.jl",
+                     "negative_binomial.run.jl",
+                     "normal-mixture.run.jl",
+                     "school8.run.jl",
+                     "binomial.run.jl",
+                     "binormal.run.jl",
+                     "MoC.run.jl",
+                     "sv.run.jl",
+                     "gdemo-geweke.run.jl",
+                     "profile.jl", # segfaults
+                     # Freezes
+                     "lda.run.jl",
+                     # to be fixed
+                     "bernoulli.run.jl",
+                     "gauss.run.jl",
+                     "gdemo.run.jl",
+                     ]
 
 # Don't have send_log
 inactive_benchmarks = ["binomial.run.jl",
-                        "change-point.jl",
-                        "dyes.run.jl",
-                        "gdemo-geweke.run.jl",
-                        "negative_binomial.run.jl",
-                        "normal-loc.run.jl",
-                        "ode.jl",
-                        "optimization.jl",
-                        "profile.jl",
-                        "sv.run.jl"]
+                       "change-point.jl",
+                       "dyes.run.jl",
+                       "gdemo-geweke.run.jl",
+                       "negative_binomial.run.jl",
+                       "normal-loc.run.jl",
+                       "ode.jl",
+                       "optimization.jl",
+                       "profile.jl",
+                       "sv.run.jl",
+                       ]
 
 function tobenchmark(filename)
     if filename ∈ broken_benchmarks || occursin("stan", filename)
@@ -329,6 +330,11 @@ function vis_topic_res(samples, K, V, avg_range)
 end
 =#
 
+include("utils.jl")
+include("config.jl")
+include("reporter.jl")
 include("turingbot.jl")
+include("runner.jl")
+include("AppServer.jl")
 
 end #module
