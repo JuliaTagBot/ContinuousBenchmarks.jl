@@ -19,6 +19,8 @@ const app_repo_bmbr = Config.get_config("github.app_repo_bmbr")
 const bot_user = Config.get_config("github.user")
 
 function bm_from_comment(data)
+    data.payload["action"] != "created" && return
+
     bot_auth = GitHub.authenticate(Config.get_config("github.token"))
 
     comment_url = data.payload["comment"]["html_url"]
