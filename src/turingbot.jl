@@ -3,7 +3,7 @@ module TuringBot
 # Inspired from https://github.com/JuliaCI/Nanosoldier.jl
 
 using GitHub, HTTP, Sockets, JSON
-using ..TuringBenchmarks: tobenchmark, BENCH_DIR, inactive_benchmarks,
+using ..TuringBenchmarks: should_run_benchmark, BENCH_DIR, inactive_benchmarks,
     benchmark_files, getturingpath
 using ..Config
 
@@ -492,7 +492,7 @@ function local_benchmark(branch_names, turing_path=getturingpath())
                 isdir(snipsha(sha)) || mkdir(snipsha(sha))
                 for (root, dirs, files) in walkdir(BENCH_DIR)
                     for file in files
-                        if tobenchmark(file) && file ∉ inactive_benchmarks && splitext(file)[2] == ".jl"
+                        if should_run_benchmark(file)
                             filepath = abspath(joinpath(root, file))
                             benchmark_files([filepath], send=false, save_path=snipsha(sha))
                         end

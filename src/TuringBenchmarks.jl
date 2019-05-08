@@ -4,15 +4,15 @@ __precompile__(false)
 
 using Statistics, Dates, HTTP, JSON
 
-export  benchmark_models,
-        benchmark_files,
-        @tbenchmark,
-        get_stan_time,
-        build_logd,
-        send_log,
-        print_log,
-        getbenchpath,
-        tobenchmark
+export @tbenchmark,
+    benchmark_models,
+    benchmark_files,
+    get_stan_time,
+    build_logd,
+    send_log,
+    print_log,
+    getbenchpath,
+    should_run_benchmark
 
 # using StatPlots
 # using DataFrames
@@ -50,12 +50,12 @@ inactive_benchmarks = ["binomial.run.jl",
                        "sv.run.jl",
                        ]
 
-function tobenchmark(filename)
-    if filename ∈ broken_benchmarks || occursin("stan", filename)
-        return false
-    else
-        return true
-    end
+function should_run_benchmark(filename)
+    splitext(filename)[2] != ".jl" && return false
+    filename ∈ inactive_benchmarks && return false
+    filename ∈ broken_benchmarks && return false
+    occursin("stan", filename) && return false
+    return true
 end
 
 const LOG_URL = "http://github.turingbenchmarks.ultrahook.com"
@@ -333,7 +333,6 @@ end
 include("utils.jl")
 include("config.jl")
 include("reporter.jl")
-include("turingbot.jl")
 include("runner.jl")
 include("AppServer.jl")
 
