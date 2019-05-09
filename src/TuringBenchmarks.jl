@@ -59,6 +59,7 @@ function should_run_benchmark(filename)
 end
 
 const LOG_URL = "http://github.turingbenchmarks.ultrahook.com"
+
 const MODELS_DIR = abspath(joinpath(@__DIR__, "..", "models"))
 const STAN_MODELS_DIR = abspath(joinpath(MODELS_DIR, "stan-models"))
 
@@ -68,50 +69,58 @@ const STAN_DATA_DIR = abspath(joinpath(DATA_DIR, "stan-data"))
 const BENCH_DIR = abspath(joinpath(@__DIR__, "..", "benchmarks"))
 const SIMULATIONS_DIR = abspath(joinpath(@__DIR__, "..", "simulations"))
 
+
+include("utils.jl")
+
+using .Utils
+
 include("cmdstan_home.jl")
 const CMDSTAN_HOME = cmdstan_home()
 
 const SEND_SUMMARY = Ref(true)
 
-# NOTE: put Stan models before Turing ones if you want to compare them in print_log
+# NOTE:
+# put Stan models before Turing ones if you want to compare them in print_log
 const default_model_list = ["gdemo-geweke",
-                            #"normal-loc",
+                            # "normal-loc",
                             "normal-mixture",
                             "gdemo",
                             "gauss",
                             "bernoulli",
-                            #"negative-binomial",
+                            # "negative-binomial",
                             "school8",
                             "binormal",
                             "kid"]
 
 # Get running time of Stan
 function get_stan_time(stan_model_name::String)
-    s = readlines(pwd()*"/tmp/$(stan_model_name)_samples_1.csv")
-    println(s[end-1])
-    m = match(r"(?<time>[0-9]+.[0-9]*)", s[end-1])
+    s = readlines(pwd() * "/tmp/$(stan_model_name)_samples_1.csv")
+    println(s[end - 1])
+    m = match(r"(?<time>[0-9]+.[0-9]*)", s[end - 1])
     parse(Float64, m[:time])
 end
 
 # Run benchmark
 macro tbenchmark(alg, model, data)
     model = :(($model isa String ? eval(Meta.parse($model)) : $model))
-    model_dfn = data isa Expr && data.head == :tuple ? :(model_f = $model($(data)...)) : model_f = :(model_f = $model($data))
+    model_dfn = (data isa Expr && data.head == :tuple) ?
+        :(model_f = $model($(data)...)) : model_f = :(model_f = $model($data))
     esc(quote
         $model_dfn
-        chain, _, mem, _, _  = @timed sample(model_f, $alg)
-        $(string(alg)), sum(chain[:elapsed]), mem, chain, deepcopy(chain)
-    end)
+        chain, t_elapsed, mem, gctime, memallocs  = @timed sample(model_f, $alg)
+        $(string(alg)), t_elapsed, mem, chain, deepcopy(chain)
+        end)
 end
 
 # Build logd from Turing chain
 function build_logd(name::String, engine::String, time, mem, tchain, _)
+    mn(c, v) = mean(convert(Array, c[Symbol(v)][min(1001, 9*end÷10):end]))
     Dict(
         "name" => name,
         "engine" => engine,
         "time" => time,
         "mem" => mem,
-        "turing" => Dict(v => mean(tchain[Symbol(v)][min(1001, 9*end÷10):end]) for v in keys(tchain))
+        "turing" => Dict(v => mn(tchain, v) for v in keys(tchain))
     )
 end
 
@@ -178,31 +187,14 @@ end
 
 print_log(logd::Dict, monitor=[]) = print(log2str(logd, monitor))
 
-snip(str, len) = str[1:min(len, end)]
-snipsha(sha) = snip(sha, 7)
-function getturingpath()
-    juliaexe_path = joinpath(Sys.BINDIR, Base.julia_exename())
-    splitdir(splitdir(readchomp(`$(juliaexe_path) -e "using Turing; println(pathof(Turing))"`))[1])[1]
-end
-
-function getcommit()
-    replace(split(read(pipeline(`git show --summary `, `grep "commit"`), String), " ")[2], "\n"=>"")
-end
-
 function send_log(logd::Dict, monitor=[])
-    benchmarks_commit_str = ""
-    cd(splitdir(Base.@__DIR__)[1]) do
-        benchmarks_commit_str = getcommit()
-    end
+    benchmarks_commit_str = githeadsha((Base.@__DIR__) |> dirname)
     @assert benchmarks_commit_str != ""
 
-    turing_commit_str = ""
-    cd(getturingpath()) do
-        turing_commit_str = getcommit()
-    end
+    turing_commit_str = githeadsha(turingpath())
     @assert turing_commit_str != ""
 
-    time_str = "$(Dates.format(now(), "dd-u-yyyy-HH-MM-SS"))"
+    time_str = Dates.format(now(), "dd-u-yyyy-HH-MM-SS")
     logd["created"] = time_str
     logd["turing_commit"] = turing_commit_str
     logd["bench_commit"] = benchmarks_commit_str
@@ -235,71 +227,6 @@ function gen_mkd_table_for_commit(commit)
     mkd
 end
 
-function benchmark_models(model_list=default_model_list; send = true, save_path = "")
-    println("Turing benchmarking started.")
-    for model in model_list
-        try
-            _benchmark_model(model, send=send, save_path=save_path)
-        catch err
-            println("Error running the benchmark $model.")
-            if :msg in fieldnames(typeof(err))
-                println(err.msg)
-            end
-            !send && throw(err)
-        end
-    end
-    println("Turing benchmarking completed.")
-end
-
-function benchmark_files(file_list=default_model_list; send = true, save_path = "")
-    println("Turing benchmarking started.")
-    for file in file_list
-        try
-            _benchmark_file(file, send=send, save_path=save_path)
-        catch err
-            println("Error running the benchmark $file.")
-            if :msg in fieldnames(typeof(err))
-                println(err.msg)
-            end
-            !send && throw(err)
-        end
-    end
-    println("Turing benchmarking completed.")
-end
-
-function _benchmark_model(modelname; send = true, save_path = "")
-    println("Benchmarking `$modelname` ... ")
-    _benchmark_file(modelname, send=send, model=true, save_path=save_path)
-    println("`$modelname` ✓")
-    return
-end
-
-getbenchpath(modelname) = joinpath(TuringBenchmarks.BENCH_DIR, "$(modelname).run.jl")
-
-function _benchmark_file(fileormodel; send = true, model = false, save_path = "")
-    if model
-        include_arg = "TuringBenchmarks.getbenchpath(\"$fileormodel\")"
-    else
-        filepath = fileormodel
-        println("Benchmarking `$filepath` ... ")
-        include_arg = "\"$(replace(filepath, "\\"=>"\\\\"))\""
-    end
-    julia_path = joinpath(Sys.BINDIR, Base.julia_exename())
-    send_code = send ? "TuringBenchmarks.SEND_SUMMARY[] = true;" : "TuringBenchmarks.SEND_SUMMARY[] = false"
-    save_code = (save_path == "") ? "" : "using JSON; cd(()->write(TuringBenchmarks.TuringBot.getfilename(logd)*\".json\", JSON.json(logd)*\"\\n\"), \"$save_path\")"
-
-    project_dir = splitdir(@__DIR__)[1]
-    job = `$julia_path -e
-                "using Pkg; Pkg.activate(\"$project_dir\"); Pkg.instantiate()
-                using CmdStan, Turing, TuringBenchmarks;
-                CmdStan.set_cmdstan_home!(TuringBenchmarks.CMDSTAN_HOME);
-                $send_code
-                include($include_arg);
-                $save_code"`
-    println(job); run(job)
-    !model && println("`$filepath` ✓")
-    return
-end
 
 #=
 """
@@ -330,7 +257,6 @@ function vis_topic_res(samples, K, V, avg_range)
 end
 =#
 
-include("utils.jl")
 include("config.jl")
 include("reporter.jl")
 include("runner.jl")

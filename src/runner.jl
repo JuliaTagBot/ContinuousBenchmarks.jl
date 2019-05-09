@@ -4,13 +4,11 @@ using Pkg
 using GitHub
 using Base64
 
+using ..Utils
 using ..Reporter
-using ..TuringBot
 using ..Config
 
-using ..TuringBenchmarks: BENCH_DIR, should_run_benchmark,
-    benchmark_files
-
+using ..TuringBenchmarks: BENCH_DIR, default_model_list, should_run_benchmark
 
 const app_repo = Config.get_config("github.app_repo")
 const app_repo_bmbr = Config.get_config("github.app_repo_bmbr")
@@ -36,49 +34,6 @@ function run_bm(name::String)
     Reporter.send(name, bm_info, report_path)
 end
 
-
-drop2(x) = x[3:end]
-
-function gitcurrentbranch()
-    branches = readlines(`git branch`)
-    ind = findfirst(x -> x[1] == '*', branches)
-    return drop2(branches[ind])
-end
-gitcurrentbranch(path) = cd(gitcurrentbranch, path)
-
-function gitbranches(branches)
-    currentbranch = gitcurrentbranch()
-    all_branches = drop2.(readlines(`git branch -al`))
-    for brch in branches
-        (brch in all_branches) && continue
-        br_idx = findfirst(all_branches) do b endswith(b, "/" * brch) end
-        br_idx == nothing && throw("Branch $brch not found.")
-        run(`git checkout -b $brch $(all_branches[br_idx])`)
-    end
-    run(`git checkout $currentbranch`)
-end
-gitbranches(path, branches) = cd(() -> gitbranches(branches), path)
-
-function onbranch(f::Function, repopath, branch)
-    cd(repopath) do
-        currentbranch = gitcurrentbranch()
-        currentbranch != branch && run(`git checkout $branch`)
-        f()
-        currentbranch != branch && run(`git checkout $currentbranch`)
-    end
-end
-
-getbranchsha(branch) = strip(read(`git rev-parse $branch`, String))
-getbranchsha(path, branch) = cd(()-> getbranchsha(branch), path)
-getbranchshas(path, branches) = getbranchsha.((path,), branches)
-
-
-function turingpath()
-    juliaexe_path = joinpath(Sys.BINDIR, Base.julia_exename())
-    turing_jl = readchomp(`$(juliaexe_path) -e "using Turing; println(pathof(Turing))"`)
-    turing_jl |> dirname |> dirname
-end
-
 function result_dir(name)
     project_dir = (@__DIR__) |> dirname
     results_dir = joinpath(project_dir, "benchmark_results")
@@ -91,28 +46,63 @@ end
 
 function local_benchmark(name, branch_names, turing_path=turingpath())
     @assert length(branch_names) > 1
+    branch_names = [branch_names...]
     gitbranches(turing_path, branch_names)
     result_path = result_dir(name)
-    shas = getbranchshas(turing_path, branch_names)
+    shas = gitbranchshas(turing_path, branch_names)
 
     cd(result_path) do
         for (branch, sha) in zip(branch_names, shas)
             onbranch(turing_path, branch) do
+                isdir(snip7(sha)) || mkdir(snip7(sha))
                 for (root, dirs, files) in walkdir(BENCH_DIR)
                     for file in files
                         if should_run_benchmark(file)
-                            filepath = abspath(joinpath(root, file))
-                            println("BM: " * filepath)
-                            # benchmark_files([filepath], send=false, save_path=snipsha(sha))
+                            bm_file = abspath(joinpath(root, file))
+                            run_benchmarks([bm_file], send=false, save_path=snip7(sha))
                         end
                     end
                 end
             end
         end
-        Reporter.write_report!("report.md", branches, shas)
+        Reporter.write_report!("report.md", branch_names, shas)
     end
 
     return joinpath(result_path, "report.md")
+end
+
+function run_benchmarks(files=default_model_list; send = true, save_path = "")
+    @info("Turing benchmarking started.")
+    for file in files
+        try
+            run_benchmark(file, send=send, save_path=save_path)
+        catch err
+            @error("Error occurs while running the benchmark: $file.")
+            if :msg in fieldnames(typeof(err))
+                @error(err.msg)
+            end
+            !send && throw(err)
+        end
+    end
+    @info("Turing benchmarking completed.")
+end
+
+function run_benchmark(fileormodel; send = true, save_path = "")
+    bm_path = find_bm_file(fileormodel)
+    @info("Benchmarking `$bm_path` ... ")
+    data = Dict(
+        :project_dir => dirname(@__DIR__),
+        :send => send ? "true" : "false",
+        :bm_file => bm_path,
+        :save_path => save_path,
+    )
+    julia_path = joinpath(Sys.BINDIR, Base.julia_exename())
+    code = code_bm_run(data)
+    job = `$julia_path -e $code`
+    @debug(job);
+    run(job)
+    @info("`$bm_path` ✓")
+    return
 end
 
 end
