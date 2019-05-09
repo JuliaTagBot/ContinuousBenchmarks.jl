@@ -25,7 +25,8 @@ export
     benchmark_branches,
     bm_name,
     # template
-    code_bm_run
+    code_bm_run,
+    stringify_log
 
 # string utils
 
@@ -176,5 +177,86 @@ cd(()->write(log_file, JSON.json(logd, 2)), "{{{ :save_path }}}")
 """
 code_bm_run(data) = render(tmpl_code_bm_run, data)
 
+# report template
+
+const tmpl_log_string = """
+/=======================================================================
+| Benchmark Result for >>> {{{ name }}} <<<
+|-----------------------------------------------------------------------
+| Overview
+|-----------------------------------------------------------------------
+| Inference Engine  : {{{ engine }}}
+| Time Used (s)     : {{{ time }}}
+{{#time_stan}}
+|   -> time by Stan : {{{ time_stan }}}
+{{/time_stan}}
+| Mem Alloc (bytes) : {{{ mem }}}
+{{#turing}}
+|-----------------------------------------------------------------------
+| Turing Inference Result
+|-----------------------------------------------------------------------
+{{/turing}}
+{{#turing_items}}
+| >> {{{ name }}} <<
+| mean = {{{ mean }}}
+{{#analytic}}
+|   -> analytic = {{{ analytic }}}
+{{/analytic}}
+{{#anal_diff}}
+|        |--*-->  diff = {{{ anal_diff }}}
+{{/anal_diff}}
+{{#stan}}
+|   -> Stan     = {{{ stan }}}
+{{/stan}}
+{{#stan_diff}}
+|        |--*--> diff = {{{ anal_diff }}}
+{{/stan_diff}}
+{{/turing_items}}
+{{#note}}
+|-----------------------------------------------------------------------
+| Note:
+|   {{{ note }}}
+{{/note}}
+\\=======================================================================
+"""
+
+function stringify_log(logd::Dict, monitor=[])
+    data = Dict{Any, Any}(
+        "name" => logd["name"],
+        "engine" => logd["engine"],
+        "time" => logd["time"],
+        "mem" => logd["mem"],
+    )
+    haskey(logd, "time_stan") && (data["time_stan"] = logd["time_stan"])
+    haskey(logd, "note") && (data["note"] = logd["note"])
+
+    if haskey(logd, "turing")
+        data["turing"] = true
+        data["turing_items"] = []
+        for (v, m) = logd["turing"]
+            (!isempty(monitor) && !(v in monitor)) && continue
+
+            item = Dict{Any, Any}("name" => v)
+            item["mean"] = round.(m, digits=3)
+            if haskey(logd, "analytic") && haskey(logd["analytic"], v)
+                item["analytic"] = round(logd["analytic"][v], digits=3)
+                diff = abs.(m - logd["analytic"][v])
+                if sum(diff) > 0.2
+                    item["anal_diff"] = round(diff, digits=3)
+                end
+            end
+            if haskey(logd, "stan") && haskey(logd["stan"], v)
+                item["stan"] = round.(logd["stan"][v], digits=3)
+                diff = abs.(m - logd["stan"][v])
+                if sum(diff) > 0.2
+                    item["stan_diff"] = round.(diff, digits=3)
+                end
+            end
+            push!(data["turing_items"], item)
+        end
+    end
+
+    render(tmpl_log_string, data)
+end
 
 end

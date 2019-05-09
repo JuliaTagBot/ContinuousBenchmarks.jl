@@ -125,67 +125,7 @@ function build_logd(name::String, engine::String, time, mem, tchain, _)
 end
 
 # Log function
-function log2str(logd::Dict, monitor=[])
-    str = ""
-    str *= ("/=======================================================================") * "\n"
-    str *= ("| Benchmark Result for >>> $(logd["name"]) <<<") * "\n"
-    str *= ("|-----------------------------------------------------------------------") * "\n"
-    str *= ("| Overview") * "\n"
-    str *= ("|-----------------------------------------------------------------------") * "\n"
-    str *= ("| Inference Engine  : $(logd["engine"])") * "\n"
-    str *= ("| Time Used (s)     : $(logd["time"])") * "\n"
-    if haskey(logd, "time_stan")
-        str *= ("|   -> time by Stan : $(logd["time_stan"])") * "\n"
-    end
-    str *= ("| Mem Alloc (bytes) : $(logd["mem"])") * "\n"
-    if haskey(logd, "turing")
-        str *= ("|-----------------------------------------------------------------------") * "\n"
-        str *= ("| Turing Inference Result") * "\n"
-        str *= ("|-----------------------------------------------------------------------") * "\n"
-        for (v, m) = logd["turing"]
-            if isempty(monitor) || v in monitor
-                str *= ("| >> $v <<") * "\n"
-                str *= ("| mean = $(round.(m, digits=3))") * "\n"
-                if haskey(logd, "analytic") && haskey(logd["analytic"], v)
-                    str *= ("|   -> analytic = $(round(logd["analytic"][v], digits=3)), ")
-                    diff = abs.(m - logd["analytic"][v])
-                    diff_output = "diff = $(round(diff, digits=3))"
-                    if sum(diff) > 0.2
-                        # TODO: try to fix this
-                        #print_with_color(:red, diff_output*"\n")
-                        print(diff_output*"\n")
-                        str *= (diff_output) * "\n"
-                    else
-                        str *= (diff_output) * "\n"
-                    end
-                end
-                if haskey(logd, "stan") && haskey(logd["stan"], v)
-                    str *= ("|   -> Stan     = $(round.(logd["stan"][v], digits=3)), ")
-                    println(m, logd["stan"][v])
-                    diff = abs.(m - logd["stan"][v])
-                    diff_output = "diff = $(round.(diff, digits=3))"
-                    if sum(diff) > 0.2
-                        # TODO: try to fix this
-                        #print_with_color(:red, diff_output*"\n")
-                        print(diff_output*"\n")
-                        str *= (diff_output) * "\n"
-                    else
-                        str *= (diff_output) * "\n"
-                    end
-                end
-            end
-        end
-    end
-    if haskey(logd, "note")
-        str *= ("|-----------------------------------------------------------------------") * "\n"
-        str *= ("| Note:") * "\n"
-        note = logd["note"]
-        str *= ("| $note") * "\n"
-    end
-    str *= ("\\=======================================================================") * "\n"
-end
-
-print_log(logd::Dict, monitor=[]) = print(log2str(logd, monitor))
+print_log(logd::Dict, monitor=[]) = print(stringify_log(logd, monitor))
 
 function send_log(logd::Dict, monitor=[])
     benchmarks_commit_str = githeadsha((Base.@__DIR__) |> dirname)
