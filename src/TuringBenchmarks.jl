@@ -50,6 +50,19 @@ inactive_benchmarks = ["binomial.run.jl",
                        "sv.run.jl",
                        ]
 
+# NOTE:
+# put Stan models before Turing ones if you want to compare them in print_log
+const default_model_list = ["gdemo-geweke",
+                            # "normal-loc",
+                            "normal-mixture",
+                            "gdemo",
+                            "gauss",
+                            "bernoulli",
+                            # "negative-binomial",
+                            "school8",
+                            "binormal",
+                            "kid"]
+
 function should_run_benchmark(filename)
     splitext(filename)[2] != ".jl" && return false
     filename ∈ inactive_benchmarks && return false
@@ -57,8 +70,6 @@ function should_run_benchmark(filename)
     occursin("stan", filename) && return false
     return true
 end
-
-const LOG_URL = "http://github.turingbenchmarks.ultrahook.com"
 
 const MODELS_DIR = abspath(joinpath(@__DIR__, "..", "models"))
 const STAN_MODELS_DIR = abspath(joinpath(MODELS_DIR, "stan-models"))
@@ -76,21 +87,6 @@ using .Utils
 
 include("cmdstan_home.jl")
 const CMDSTAN_HOME = cmdstan_home()
-
-const SEND_SUMMARY = Ref(true)
-
-# NOTE:
-# put Stan models before Turing ones if you want to compare them in print_log
-const default_model_list = ["gdemo-geweke",
-                            # "normal-loc",
-                            "normal-mixture",
-                            "gdemo",
-                            "gauss",
-                            "bernoulli",
-                            # "negative-binomial",
-                            "school8",
-                            "binormal",
-                            "kid"]
 
 # Get running time of Stan
 function get_stan_time(stan_model_name::String)
@@ -124,78 +120,21 @@ function build_logd(name::String, engine::String, time, mem, tchain, _)
     )
 end
 
-# Log function
 print_log(logd::Dict, monitor=[]) = print(stringify_log(logd, monitor))
 
 function send_log(logd::Dict, monitor=[])
-    benchmarks_commit_str = githeadsha((Base.@__DIR__) |> dirname)
-    @assert benchmarks_commit_str != ""
+    benchmarks_head = githeadsha((Base.@__DIR__) |> dirname)
+    @assert benchmarks_head != ""
 
-    turing_commit_str = githeadsha(turingpath())
-    @assert turing_commit_str != ""
+    turing_head = githeadsha(turingpath())
+    @assert turing_head != ""
 
     time_str = Dates.format(now(), "dd-u-yyyy-HH-MM-SS")
     logd["created"] = time_str
-    logd["turing_commit"] = turing_commit_str
-    logd["bench_commit"] = benchmarks_commit_str
-    if SEND_SUMMARY[]
-        HTTP.open("POST", TuringBenchmarks.LOG_URL) do io
-            write(io, JSON.json(logd))
-        end
-    end
+    logd["turing_commit"] = turing_head
+    logd["bench_commit"] = benchmarks_head
 end
 
-function gen_mkd_table_for_commit(commit)
-    # commit = "f4ca7bfc8a63e5a6825ec272e7dffed7be623b31"
-    api_url = "https://api.mlab.com/api/1/databases/benchmark/collections/log?q={%22commit%22:%22$commit%22}&apiKey=Hak1H9--KFJz7aAx2rAbNNgub1KEylgN"
-    res = get(api_url)
-    # print(res)
-
-    json = JSON.parse(read(res, String))
-    # json[1]
-
-    mkd  = "| Model | Turing | Stan | Ratio |\n"
-    mkd *= "| ----- | ------ | ---- | ----- |\n"
-    for log in json
-        modelName = log["name"]
-        tt, ts = log["time"], log["time_stan"]
-        rt = tt / ts
-        tt, ts, rt = round(tt, digits=2), round(ts, digits=2), round(rt, digits=2)
-        mkd *= "|$modelName|$tt|$ts|$rt|\n"
-    end
-
-    mkd
-end
-
-
-#=
-"""
-Function for visualization topic models.
-
-Usage:
-
-    vis_topic_res(samples, K, V, avg_range)
-
-- `samples` is the chain return by `sample()`
-- `K` is the number of topics
-- `V` is the size of vocabulary
-- `avg_range` is the end point of the running average
-"""
-function vis_topic_res(samples, K, V, avg_range)
-    phiarr = mean(samples[:phi][1:avg_range])
-
-    phi = Matrix(0, V)
-    for k = 1:K
-        phi = vcat(phi, phiarr[k]')
-    end
-
-    df = DataFrame(Topic = vec(repmat(collect(1:K)', V, 1)),
-                Word = vec(repmat(collect(1:V)', 1, K)),
-                Probability = vec(phi))
-
-    return @df df plot(:Word, [:Topic], colour = [:Probability])
-end
-=#
 
 include("config.jl")
 include("reporter.jl")

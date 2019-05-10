@@ -1,6 +1,7 @@
 module Utils
 
 using Dates
+using JSON
 using Mustache
 
 using ..TuringBenchmarks: BENCH_DIR
@@ -21,12 +22,14 @@ export
     turingpath,
     find_bm_file,
     result_filename,
+    result_dir,
     # bm
     benchmark_branches,
     bm_name,
     # template
     code_bm_run,
-    stringify_log
+    stringify_log,
+    generate_report
 
 # string utils
 
@@ -61,11 +64,13 @@ end
 gitbranches(path, branches) = cd(() -> gitbranches(branches), path)
 
 function onbranch(f::Function, repopath, branch)
-    cd(repopath) do
-        currentbranch = gitcurrentbranch()
-        currentbranch != branch && run(`git checkout $branch`)
-        f()
-        currentbranch != branch && run(`git checkout $currentbranch`)
+    currentbranch = gitcurrentbranch(repopath)
+    currentbranch != branch && cd(repopath) do
+        run(`git checkout $branch`)
+    end
+    f()
+    currentbranch != branch && cd(repopath) do
+        run(`git checkout $currentbranch`)
     end
 end
 
@@ -93,6 +98,16 @@ function result_filename(data)
     filename = replace(filename, [' ', ',', '('] => "_")
     filename = replace(filename, [')', '.', ':'] => "")
     filename
+end
+
+function result_dir(name)
+    project_dir = (@__DIR__) |> dirname
+    results_dir = joinpath(project_dir, "benchmark_results")
+    isdir(results_dir) || mkdir(results_dir)
+    cd(results_dir) do
+        isdir(name) || mkdir(name)
+    end
+    return joinpath(results_dir, name)
 end
 
 # benchmark utils
@@ -167,7 +182,6 @@ Pkg.instantiate()
 
 using CmdStan, Turing, TuringBenchmarks;
 CmdStan.set_cmdstan_home!(TuringBenchmarks.CMDSTAN_HOME);
-TuringBenchmarks.SEND_SUMMARY[] = {{{ :send }}}
 
 include("{{{ :bm_file }}}");
 
@@ -257,6 +271,113 @@ function stringify_log(logd::Dict, monitor=[])
     end
 
     render(tmpl_log_string, data)
+end
+
+const tmpl_report_md = """
+# Benchmark Report
+
+## Job properties
+
+**Turing Branches**:
+{{#branches}}
+- **{{{ name }}}**({{ sha }}) {{#is_base}}**[BASE_BRANCH]**{{/is_base}}
+{{/branches}}
+
+**TuringBenchmarks Commit**: {{ bench_commit }}
+
+## Results Table:
+
+Below is a table of this job's results, obtained by running the
+benchmarks found in
+[TuringLang/TuringBenchmarks](https://github.com/TuringLang/TuringBenchmarks). The
+table shows the time ratio of the N (N >= 2) Turing commits
+benchmarked. A ratio greater than `1.0` denotes a possible regression
+(marked with :-1:), while a ratio less than `1.0` denotes a possible
+improvement (marked with :+1:). Results are subject to
+noise so small fluctuations around `1.0` may be ignored.
+
+| BenchMark    | {{#branches}} TimeRatio({{{ name }}}) | {{/branches}}
+| -----------  | {{#branches}} ----------------------- | {{/branches}}
+{{#benchmarks}}
+| {{{ name }}} | {{#results}} {{{ label }}} | {{/results}}
+{{/benchmarks}}
+
+## Raw Results:
+
+{{#benchmarks}}
+### {{{ name }}}
+{{#results}}
+#### On Branch `{{{ branch }}`
+```javascript
+{{{ result_json }}}
+```
+
+{{/results}}
+{{/benchmarks}}
+
+"""
+
+function generate_report(bm_name, branches, shas, base_branch = "")
+    result_path = result_dir(bm_name)
+    if !(base_branch in branches)
+        base_branch = ("master" in branches) ? "master" : branches[1]
+    end
+
+    data = Dict{Any, Any}(
+        "branches" => [],
+        "benchmarks" => [],
+    )
+
+    for (br, sha) in zip(branches, shas)
+        item = Dict{Any, Any}(
+            "name" => br,
+            "sha" => snip7(sha),
+            "is_base" => br == base_branch,
+        )
+        push!(data["branches"], item)
+    end
+
+    result_files = readdir(joinpath(result_path, snip7(shas[1])))
+    result_files = filter(result_files) do fname
+        all(isfile, map((sha) -> joinpath(result_path, snip7(sha), fname), shas))
+    end
+
+    for fname in result_files
+        base_br_idx = indexin(branches, [base_branch])[1]
+        base_sha = snip7(shas[base_br_idx])
+        base_result_file = joinpath(result_path, base_sha, fname)
+        base_result_json = read(open(base_result_file), String)
+        base_result_data = JSON.parse(base_result_json)
+        base_time = round(base_result_data["time"] * 1000, digits = 3)
+        if haskey(base_result_data, "bench_commit")
+            data["bench_commit"] = base_result_data["bench_commit"] |> snip7
+        end
+
+        bench = Dict{Any, Any}(
+            "name" => """`$(base_result_data["name"]) - $(base_result_data["engine"])`""",
+            "results" => [],
+        )
+
+        for (br, sha) in zip(branches, shas)
+            result_file = joinpath(result_path, snip7(sha), fname)
+            result_json = read(open(result_file), String)
+            result_data = JSON.parse(result_json)
+            time = round(result_data["time"] * 1000, digits = 3)
+            ratio = round(time / base_time, digits=2)
+            symbol = ratio > 1 ? ":-1:" : ":+1:"
+            item = Dict{Any, Any}(
+                "branch" => br,
+                "result_json" => result_json,
+                "label" => "$ratio ($time ms / $base_time ms) $symbol",
+            )
+
+            push!(bench["results"], item)
+        end
+
+        push!(data["benchmarks"], bench)
+    end
+
+    render(tmpl_report_md, data)
 end
 
 end

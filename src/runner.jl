@@ -34,16 +34,6 @@ function run_bm(name::String)
     Reporter.send(name, bm_info, report_path)
 end
 
-function result_dir(name)
-    project_dir = (@__DIR__) |> dirname
-    results_dir = joinpath(project_dir, "benchmark_results")
-    isdir(results_dir) || mkdir(results_dir)
-    cd(results_dir) do
-        isdir(name) || mkdir(name)
-    end
-    return joinpath(results_dir, name)
-end
-
 function local_benchmark(name, branch_names, turing_path=turingpath())
     @assert length(branch_names) > 1
     branch_names = [branch_names...]
@@ -59,40 +49,39 @@ function local_benchmark(name, branch_names, turing_path=turingpath())
                     for file in files
                         if should_run_benchmark(file)
                             bm_file = abspath(joinpath(root, file))
-                            run_benchmarks([bm_file], send=false, save_path=snip7(sha))
+                            run_benchmarks([bm_file], save_path=snip7(sha))
                         end
                     end
                 end
             end
         end
-        Reporter.write_report!("report.md", branch_names, shas)
+        Reporter.write_report!(name, "report.md", branch_names, shas)
     end
 
     return joinpath(result_path, "report.md")
 end
 
-function run_benchmarks(files=default_model_list; send = true, save_path = "")
+function run_benchmarks(files=default_model_list; ignore_error=true, save_path="")
     @info("Turing benchmarking started.")
     for file in files
         try
-            run_benchmark(file, send=send, save_path=save_path)
+            run_benchmark(file, save_path=save_path)
         catch err
             @error("Error occurs while running the benchmark: $file.")
             if :msg in fieldnames(typeof(err))
                 @error(err.msg)
             end
-            !send && throw(err)
+            !ignore_error && throw(err)
         end
     end
     @info("Turing benchmarking completed.")
 end
 
-function run_benchmark(fileormodel; send = true, save_path = "")
+function run_benchmark(fileormodel; save_path="")
     bm_path = find_bm_file(fileormodel)
     @info("Benchmarking `$bm_path` ... ")
     data = Dict(
         :project_dir => dirname(@__DIR__),
-        :send => send ? "true" : "false",
         :bm_file => bm_path,
         :save_path => save_path,
     )

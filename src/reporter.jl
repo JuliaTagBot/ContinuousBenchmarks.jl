@@ -55,8 +55,10 @@ function send(benchmark, bm_info, report_file)
     create_comment(m[1], parse(Int, m[2]), :issue; params=params, auth=bot_auth)
 end
 
-function write_report!(filename, branches::Vector, shas::Vector)
-    # TODO
+function write_report!(bm_name, filename, branches::Vector, shas::Vector, base_branch="")
+    report_md = generate_report(bm_name, branches, shas, base_branch)
+    result_path = joinpath(result_dir(bm_name), filename)
+    write(result_path, report_md)
 end
 
 end
