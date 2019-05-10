@@ -150,10 +150,11 @@ end
 bm_name(branch::String) = "BM-" * Dates.format(now(), "YYYYmmddHHMM-") * branch
 bm_name(brches::Vector{String}) = bm_name(nonmaster_br(brches))
 
-bm_file_content(issue_url, comment_url, branches) = """
+bm_file_content(user, issue_url, comment_url, branches) = """
 [trigger]
 issue_url = "$(issue_url)"
 comment_url = "$(comment_url)"
+user = $user
 
 [benchmark]
 branches = $(repr(branches))
@@ -167,8 +168,8 @@ The issue is created for tracking the benchmark job.
 See more information at $comment_url.
 """
 
-bm_reply0_content(issue_url) = """
-Hi Sir, a new benchmark job will be dispatched soon at your command,
+bm_reply0_content(user, issue_url) = """
+Hi @$user, a new benchmark job will be dispatched soon at your command,
 you can track it here: $(issue_url).
 """
 
@@ -180,8 +181,8 @@ The report is committed in this commit: $commit_id.
 You can see the report at $report_url.
 """
 
-bm_reply1_content(bm_name, repo, commit_id, report_url) = """
-Hi Sir,
+bm_reply1_content(bm_name, user, repo, commit_id, report_url) = """
+Hi @$user,
 
 The benchmark [$bm_name] job is finished.
 

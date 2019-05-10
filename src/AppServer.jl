@@ -25,6 +25,7 @@ function bm_from_comment(data)
 
     comment_url = data.payload["comment"]["html_url"]
     comment_body = data.payload["comment"]["body"]
+    user = data.payload["comment"]["user"]["login"]
     issue_no = data.payload["issue"]["number"]
     issue_url = data.payload["issue"]["html_url"]
     issue_repo = data.repository
@@ -32,12 +33,12 @@ function bm_from_comment(data)
     occursin("@TuringBenchBot", comment_body) || return
     branches = benchmark_branches(comment_body)
     if isempty(branches)
-        params = Dict("body" => "Yes Sir?")
+        params = Dict("body" => "@$user Yes Sir?")
         create_comment(issue_repo, issue_no, :issue; params=params, auth=bot_auth)
         return
     end
     name = bm_name(branches)
-    content = base64encode(Utils.bm_file_content(issue_url, comment_url, branches))
+    content = base64encode(Utils.bm_file_content(user, issue_url, comment_url, branches))
     params = Dict("branch" => app_repo_bmbr,
                   "message" => name,
                   "content" => content)
@@ -48,7 +49,7 @@ function bm_from_comment(data)
     params = Dict("title"=>name, "body"=>Utils.bm_issue_content(commit_id, comment_url))
     issue = create_issue(app_repo; params=params, auth=bot_auth)
 
-    params = Dict("body" => Utils.bm_reply0_content(issue.html_url.uri))
+    params = Dict("body" => Utils.bm_reply0_content(user, issue.html_url.uri))
     create_comment(issue_repo, issue_no, :issue; params=params, auth=bot_auth)
 end
 

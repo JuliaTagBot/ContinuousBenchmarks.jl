@@ -48,10 +48,10 @@ function send(benchmark, bm_info, report_file)
 
     # 3. find the trigger issue, comment it
     issue_url = bm_info["trigger"]["issue_url"]
-
+    user = bm_info["trigger"]["user"]
     reg = r".*://github.com/([^/]+/[^/]+)/issues/(\d+)"
     m = match(reg, issue_url)
-    params = Dict("body" => Utils.bm_reply1_content(name, app_repo, commit_id, report_url))
+    params = Dict("body" => Utils.bm_reply1_content(name, user, app_repo, commit_id, report_url))
     create_comment(m[1], parse(Int, m[2]), :issue; params=params, auth=bot_auth)
 end
 
