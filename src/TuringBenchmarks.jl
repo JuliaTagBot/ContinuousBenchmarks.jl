@@ -83,7 +83,9 @@ const SIMULATIONS_DIR = abspath(joinpath(@__DIR__, "..", "simulations"))
 include("cmdstan_home.jl")
 const CMDSTAN_HOME = cmdstan_home()
 
+include("config.jl")
 include("utils.jl")
+
 using .Utils
 
 # Run benchmark
@@ -126,7 +128,6 @@ function send_log(logd::Dict, monitor=[])
 end
 
 
-include("config.jl")
 include("reporter.jl")
 include("runner.jl")
 include("AppServer.jl")

@@ -41,5 +41,4 @@ function log_level()
     (log_level_str == "warn")  ? Logging.Warn  : Logging.Error
 end
 
-
 end

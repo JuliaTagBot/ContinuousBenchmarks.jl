@@ -5,6 +5,7 @@ using JSON
 using Mustache
 
 using ..TuringBenchmarks: BENCH_DIR
+using ..Config
 
 export
     # string
@@ -64,14 +65,23 @@ end
 gitbranches(path, branches) = cd(() -> gitbranches(branches), path)
 
 function onbranch(f::Function, repopath, branch)
+    remote = Config.get_config("turing.use_remote_branches", true)
     currentbranch = gitcurrentbranch(repopath)
-    currentbranch != branch && cd(repopath) do
-        run(`git fetch -all`)
-        run(`git checkout hard origin/$branch`)
-        # run(`git checkout $branch`) # local
+    cd(repopath) do
+        if remote
+            run(`git fetch --all`)
+            all_branches = drop2.(readlines(`git branch -al`))
+            if "origin/$branch" in all_branches
+                run(`git checkout origin/$branch`)
+            else
+                run(`git checkout $branch`)
+            end
+        else # local
+            run(`git checkout $branch`)
+        end
     end
     f()
-    currentbranch != branch && cd(repopath) do
+    cd(repopath) do
         run(`git checkout $currentbranch`)
     end
 end
@@ -83,6 +93,10 @@ gitbranchshas(path, branches) = gitbranchsha.((path,), branches)
 # path utils
 
 function turingpath()
+    path = Config.get_config("turing.path")
+    if path != nothing
+        return render(path, project_root=dirname(@__DIR__))
+    end
     juliaexe_path = joinpath(Sys.BINDIR, Base.julia_exename())
     turing_jl = readchomp(`$(juliaexe_path) -e "using Turing; println(pathof(Turing))"`)
     turing_jl |> dirname |> dirname
@@ -183,7 +197,7 @@ using Pkg;
 Pkg.activate("{{{ :project_dir }}}");
 Pkg.instantiate()
 
-Pkg.develop(PackageSpec(path="{{{ :project_dir }}}/../Turing.jl"))
+Pkg.develop(PackageSpec(path="{{{ :turing_path }}}"))
 
 using CmdStan, Turing, TuringBenchmarks;
 CmdStan.set_cmdstan_home!(TuringBenchmarks.CMDSTAN_HOME);

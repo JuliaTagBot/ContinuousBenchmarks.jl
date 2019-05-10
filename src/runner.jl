@@ -82,6 +82,7 @@ function run_benchmark(fileormodel; save_path="")
     @info("Benchmarking `$bm_path` ... ")
     data = Dict(
         :project_dir => dirname(@__DIR__),
+        :turing_path => turingpath(),
         :bm_file => bm_path,
         :save_path => save_path,
     )
