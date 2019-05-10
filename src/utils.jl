@@ -66,7 +66,9 @@ gitbranches(path, branches) = cd(() -> gitbranches(branches), path)
 function onbranch(f::Function, repopath, branch)
     currentbranch = gitcurrentbranch(repopath)
     currentbranch != branch && cd(repopath) do
-        run(`git checkout $branch`)
+        run(`git fetch -all`)
+        run(`git checkout hard origin/$branch`)
+        # run(`git checkout $branch`) # local
     end
     f()
     currentbranch != branch && cd(repopath) do
@@ -178,13 +180,12 @@ You can see the report at $report_url.
 const tmpl_code_bm_run = """
 using Pkg;
 
-Pkg.activate("{{{ :project_dir}}}");
+Pkg.activate("{{{ :project_dir }}}");
 Pkg.instantiate()
 
-using Turing;
-Pkg.develop(PackageSpec(path=pathof(Turing) |> dirname |> dirname))
+Pkg.develop(PackageSpec(path="{{{ :project_dir }}}/../Turing.jl"))
 
-using CmdStan, TuringBenchmarks;
+using CmdStan, Turing, TuringBenchmarks;
 CmdStan.set_cmdstan_home!(TuringBenchmarks.CMDSTAN_HOME);
 
 include("{{{ :bm_file }}}");
