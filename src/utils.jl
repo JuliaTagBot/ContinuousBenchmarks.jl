@@ -177,10 +177,14 @@ You can see the report at $report_url.
 # code templates
 const tmpl_code_bm_run = """
 using Pkg;
+
 Pkg.activate("{{{ :project_dir}}}");
 Pkg.instantiate()
 
-using CmdStan, Turing, TuringBenchmarks;
+using Turing;
+Pkg.develop(PackageSpec(path=pathof(Turing) |> dirname |> dirname))
+
+using CmdStan, TuringBenchmarks;
 CmdStan.set_cmdstan_home!(TuringBenchmarks.CMDSTAN_HOME);
 
 include("{{{ :bm_file }}}");
@@ -378,6 +382,15 @@ function generate_report(bm_name, branches, shas, base_branch = "")
     end
 
     render(tmpl_report_md, data)
+end
+
+# legacy
+# Get running time of Stan
+function get_stan_time(stan_model_name::String)
+    s = readlines(pwd() * "/tmp/$(stan_model_name)_samples_1.csv")
+    println(s[end - 1])
+    m = match(r"(?<time>[0-9]+.[0-9]*)", s[end - 1])
+    parse(Float64, m[:time])
 end
 
 end

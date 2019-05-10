@@ -160,9 +160,9 @@ function status_monitor()
 end
 
 function main()
-    if isempty(get(ENV, "ENV", ""))
+    if isempty(get(ENV, "ENV", "")) && isempty(get(ENV, "TBB_CONFIG", ""))
         println("Usage: \n\t" *
-                "export ENV=dev|prod|...\n\t"*
+                "export TBB_CONFIG=/path/to/config/file # or export ENV=dev|prod|...\n\t" *
                 "julia -e 'using TuringBenchmarks; TuringBenchmarks.AppServer.main()' ")
         return
     end

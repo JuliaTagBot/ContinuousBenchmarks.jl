@@ -2,11 +2,10 @@ using Pkg, TuringBenchmarks
 
 # Download and uncompress cmdstan
 if !haskey(ENV, "CMDSTAN_HOME") || ENV["CMDSTAN_HOME"] == ""
-    # Make the cmdstan home directory
-    
-    cmdstan_home = abspath(joinpath("..", "cmdstan"))
+    project_root = (@__DIR__) |> dirname
+    cmdstan_home = abspath(joinpath(project_root, "cmdstan"))
     # Get cmdstan and uncompress it from its url in deps/cmdstan_url.txt
-    ispath(cmdstan_home) || cd("..") do
+    ispath(cmdstan_home) || cd(project_root) do
         run(`git clone https://github.com/stan-dev/cmdstan --recursive`)
     end
     cd(cmdstan_home) do
@@ -14,18 +13,11 @@ if !haskey(ENV, "CMDSTAN_HOME") || ENV["CMDSTAN_HOME"] == ""
         v = read(`git describe --tags`, String)
         run(`git checkout $(strip(v))`)
     end
-    println("CMDStan is installed at path: $cmdstan_home")
-
-    # Wrie the src file that sets ENV["CMDSTAN_HOME"]
-    write(joinpath("..", "src", "cmdstan_home.jl"), "cmdstan_home() = \"$(replace(cmdstan_home, "\\"=>"\\\\"))\"")
-else
-    write(joinpath("..", "src", "cmdstan_home.jl"), "cmdstan_home() = $(ENV["CMDSTAN_HOME"])")
+    @info("CMDStan is installed at path: $cmdstan_home")
 end
 
 Pkg.add(["FileIO", "JLD2"])
 Pkg.develop("Turing")
-
-TuringBenchmarks.SEND_SUMMARY[] = false
 
 # Generate data from simulations
 for (root, dirs, files) in walkdir(TuringBenchmarks.SIMULATIONS_DIR)
