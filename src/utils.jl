@@ -154,7 +154,7 @@ bm_file_content(user, issue_url, comment_url, branches) = """
 [trigger]
 issue_url = "$(issue_url)"
 comment_url = "$(comment_url)"
-user = $user
+user = "$(user)"
 
 [benchmark]
 branches = $(repr(branches))
