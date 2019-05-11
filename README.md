@@ -10,12 +10,23 @@ folder. This data is generated when the package is built. When the
 package is built, `cmdstan` is also downloaded and setup where the URL
 can be accessed using `TuringBenchmarks.CMDSTAN_HOME`.
 
-## Install The App:
+## How to use the App:
 
-[![install](https://img.shields.io/badge/-install%20app-blue.svg)](https://github.com/apps/turingbenchbot/installations/new)
-
-- Install the app to your repository;
-- Add @TuringBenchBot as a collaborator if your repo is private.
+- Install the app to your
+  repository:
+  [![install](https://img.shields.io/badge/-install%20app-blue.svg)](https://github.com/apps/turingbenchbot/installations/new);
+- Add @TuringBenchBot as a collaborator if your repo is private;
+- `@` the bot in an issue comment with the body like `bm("branch1",
+  "branch2", "...")` to fire a benchmark job:
+  - At leaset one branch should be given, if only one is given, e.g.,
+    `bm("br1")`, the branch will be compared to the master branch;
+  - If more than one branches are given and the master branch is one
+    of them, e.g., `bm("master", "br1", "br2")`, the non-master
+    branches will be compared to the master branch;
+  - If more than one branches are given and the master branch is
+    **NOT** one of them, e.g., `bm("br1", "br2", "br4")`, the first
+    branch (`br1` here) will be used as the base branch and the other
+    branches will be compared to it.
 
 ## The Bot and the App
 
