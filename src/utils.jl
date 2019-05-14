@@ -160,25 +160,27 @@ user = "$(user)"
 branches = $(repr(branches))
 """
 
-bm_issue_content(commit_id, comment_url) = """
+bm_pr_content(commit_id, comment_url) = """
 A new commit is summited to trigger a benchmark job: $commit_id.
 
-The issue is created for tracking the benchmark job.
+The PullRequest is created for tracking the benchmark job.
 
 See more information at $comment_url.
 """
 
-bm_reply0_content(user, issue_url) = """
+bm_reply0_content(user, pr_url) = """
 Hi @$user, a new benchmark job will be dispatched soon at your command,
-you can track it here: $(issue_url).
+you can track it here: $(pr_url).
 """
 
-bm_issue_close_content(commit_id, report_url) = """
+bm_pr_report_content(commit_id, report_url) = """
 The benchmark job is finished.
 
 The report is committed in this commit: $commit_id.
 
 You can see the report at $report_url.
+
+If it has no issues, please consider to merge or close this PullRequest.
 """
 
 bm_reply1_content(bm_name, user, repo, commit_id, report_url) = """

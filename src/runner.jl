@@ -11,7 +11,6 @@ using ..Config
 using ..TuringBenchmarks: BENCH_DIR, default_model_list, should_run_benchmark
 
 const app_repo = Config.get_config("github.app_repo")
-const app_repo_bmbr = Config.get_config("github.app_repo_bmbr")
 
 function trigger(push_event)
     commit = push_event.payload["head_commit"]
@@ -26,7 +25,7 @@ end
 
 function run_bm(name::String)
     bot_auth = GitHub.authenticate(Config.get_config("github.token"))
-    params = Dict("ref" => app_repo_bmbr)
+    params = Dict("ref" => name) # on the PR branch
     bm_file_content = GitHub.file(app_repo, "jobs/$(name).toml"; params=params, auth=bot_auth)
     content = String(base64decode(replace(bm_file_content.content, "\n" =>"")))
     bm_info = Pkg.TOML.parse(content)

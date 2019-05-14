@@ -15,7 +15,6 @@ const event_queue = Channel{Any}(1024)
 const httpsock = Ref{Sockets.TCPServer}()
 
 const app_repo = Config.get_config("github.app_repo")
-const app_repo_bmbr = Config.get_config("github.app_repo_bmbr")
 const bot_user = Config.get_config("github.user")
 
 function bm_from_comment(data)
@@ -38,18 +37,27 @@ function bm_from_comment(data)
         return
     end
     name = bm_name(branches)
+
+    # create the branch
+    master = GitHub.reference(app_repo, "master"; auth=bot_auth)
+    params = Dict("ref" => name, "sha" => master.object["sha"])
+    GitHub.create_reference(app_repo; params=params, auth=bot_auth)
+
+    # commit bm info file on the new branch
     content = base64encode(Utils.bm_file_content(user, issue_url, comment_url, branches))
-    params = Dict("branch" => app_repo_bmbr,
+    params = Dict("branch" => name,
                   "message" => name,
                   "content" => content)
-
     commit = GitHub.create_file(app_repo, "jobs/$(name).toml"; params=params, auth=bot_auth)
 
-    commit_id = commit["commit"].sha
-    params = Dict("title"=>name, "body"=>Utils.bm_issue_content(commit_id, comment_url))
-    issue = create_issue(app_repo; params=params, auth=bot_auth)
+    # create pull request
+    params = Dict("title" => name,
+                  "head" => name,
+                  "base" => master,
+                  "body" => Utils.bm_pr_content(commit_id, comment_url))
+    pr = GitHub.create_pull_request(app_repo; params=params, auth=bot_auth)
 
-    params = Dict("body" => Utils.bm_reply0_content(user, issue.html_url.uri))
+    params = Dict("body" => Utils.bm_reply0_content(user, pr.html_url.uri))
     create_comment(issue_repo, issue_no, :issue; params=params, auth=bot_auth)
 end
 

@@ -8,7 +8,6 @@ using ..Config
 using ..Utils
 
 const app_repo = Config.get_config("github.app_repo")
-const app_repo_bmbr = Config.get_config("github.app_repo_bmbr")
 if get(ENV, "ENV", "priv") == "travis"
     const bot_token = get(ENV, "GITHUB_TOKEN", "none")
 else
@@ -22,26 +21,24 @@ function send(benchmark, bm_info, report_file)
     # 1. commit the report
     content = open(report_file) do io read(io, String) end
     content = base64encode(content)
-    params = Dict("branch" => app_repo_bmbr,
+    params = Dict("branch" => name,
                   "message" => "[skip ci] $(name) Report",
                   "content" => content)
 
     commit = GitHub.create_file(app_repo, "jobs/$(name).report.md";
                                 params=params, auth=bot_auth)
     commit_id = commit["commit"].sha
-    report_url = "https://github.com/$app_repo/blob/$app_repo_bmbr/" *
+    report_url = "https://github.com/$app_repo/blob/$name/" *
         "jobs/$(name).report.md"
 
-    # 2. find the tracking issue, comment and close the issue
-    all_issue = GitHub.issues(app_repo; auth=bot_auth)
-    tracking_issue = nothing
-    for item in  all_issue[1]
+    # 2. find the tracking PR, comment on it
+    all_prs = GitHub.pull_requests(app_repo; auth=bot_auth)
+    tracking_pr = nothing
+    for item in  all_prs[1]
         if item.title == name
-            tracking_issue = item
-            params = Dict("body" => Utils.bm_issue_close_content(commit_id, report_url))
-            create_comment(app_repo, item.number, :issue; params=params, auth=bot_auth)
-            params = Dict("state" => "closed")
-            GitHub.edit_issue(app_repo, item; params=params, auth=bot_auth)
+            tracking_pr = item
+            params = Dict("body" => Utils.bm_pr_report_content(commit_id, report_url))
+            create_comment(app_repo, item.number, :pr; params=params, auth=bot_auth)
             break
         end
     end
