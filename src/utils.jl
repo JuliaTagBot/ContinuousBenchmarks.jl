@@ -172,10 +172,8 @@ user = "$(user)"
 branches = $(repr(branches))
 """
 
-bm_pr_content(commit_id, comment_url) = """
-A new commit is summited to trigger a benchmark job: $commit_id.
-
-The PullRequest is created for tracking the benchmark job.
+bm_pr_content(comment_url) = """
+This Pull Request is created for tracking the benchmark job.
 
 See more information at $comment_url.
 """
@@ -200,7 +198,7 @@ Hi @$user,
 
 The benchmark [$bm_name] job is finished.
 
-The report is committed in this commit: $repo@$commit_id.
+The report is committed in this commit: $repo@$commit_id or go to the tracking PR.
 
 You can see the report at $report_url.
 """

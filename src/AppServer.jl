@@ -39,8 +39,8 @@ function bm_from_comment(data)
     name = bm_name(branches)
 
     # create the branch
-    master = GitHub.reference(app_repo, "master"; auth=bot_auth)
-    params = Dict("ref" => name, "sha" => master.object["sha"])
+    master = GitHub.reference(app_repo, "heads/master"; auth=bot_auth)
+    params = Dict("ref" => "refs/heads/" * name, "sha" => master.object["sha"])
     GitHub.create_reference(app_repo; params=params, auth=bot_auth)
 
     # commit bm info file on the new branch
@@ -53,8 +53,8 @@ function bm_from_comment(data)
     # create pull request
     params = Dict("title" => name,
                   "head" => name,
-                  "base" => master,
-                  "body" => Utils.bm_pr_content(commit_id, comment_url))
+                  "base" => "master",
+                  "body" => Utils.bm_pr_content(comment_url))
     pr = GitHub.create_pull_request(app_repo; params=params, auth=bot_auth)
 
     params = Dict("body" => Utils.bm_reply0_content(user, pr.html_url.uri))
