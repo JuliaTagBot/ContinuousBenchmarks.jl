@@ -1,6 +1,11 @@
-src/cmdstan_home.jl
 cmdstan/
 deps/build.log
 data/stan-data/ldastandata*
 tmp/
+benchmark_results/*
+!benchmark_results/.gitkeep
 test/ldamodel.svg
+config/stop-server
+config/*.priv.toml
+config/*.prod.toml
+config/*.pem
