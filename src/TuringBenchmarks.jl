@@ -80,13 +80,11 @@ const STAN_DATA_DIR = abspath(joinpath(DATA_DIR, "stan-data"))
 const BENCH_DIR = abspath(joinpath(@__DIR__, "..", "benchmarks"))
 const SIMULATIONS_DIR = abspath(joinpath(@__DIR__, "..", "simulations"))
 
-include("cmdstan_home.jl")
-const CMDSTAN_HOME = cmdstan_home()
-
 include("config.jl")
 include("utils.jl")
-
 using .Utils
+
+const CMDSTAN_HOME = cmdstan_home()
 
 # Run benchmark
 macro tbenchmark(alg, model, data)

@@ -24,6 +24,7 @@ export
     find_bm_file,
     result_filename,
     result_dir,
+    cmdstan_home,
     # bm
     benchmark_branches,
     bm_name,
@@ -91,6 +92,17 @@ gitbranchsha(path, branch) = cd(()-> gitbranchsha(branch), path)
 gitbranchshas(path, branches) = gitbranchsha.((path,), branches)
 
 # path utils
+
+project_root = (@__DIR__) |> dirname
+local_cmdstan_home = abspath(joinpath(project_root, "cmdstan"))
+
+if !haskey(ENV, "CMDSTAN_HOME") || ENV["CMDSTAN_HOME"] == ""
+    if !isdir(local_cmdstan_home)
+        @warn "Please build package TuringBenchmarks to install CmdStan locally."
+    end
+    ENV["CMDSTAN_HOME"] = local_cmdstan_home
+end
+cmdstan_home() = ENV["CMDSTAN_HOME"]
 
 function turingpath()
     path = Config.get_config("turing.path")
