@@ -37,17 +37,16 @@ can be accessed using `TuringBenchmarks.CMDSTAN_HOME`.
   tell it the target branches, e.g. `@TuringBenchBot bm("master",
   "branch1")`, the app will receive the instruction;
 - After receiving the benchmark instruction,
-  - the app will create a new commit in this
-    repository(TuringBenchmarks), then the commit will trigger
-    benchmark job on the App server or on Travis CI;
-  - An issue on this repository will be opened to track the benchmark
-    job;
+  - The app will create a new pull request in this repository
+    (TuringBenchmarks) with information of the benchmark request to
+    track the job. Then a benchmark job on the App server or on Travis
+    CI will be triggered;
   - A comment reply to the issue where you `@` the bot will also be
     filed to tell you that a benchemark job will be run on Travis CI;
 - When the benchemark job is done, The App server or the Travis CI
-  server will commit the report to this repository, then the tracking
-  issue will be closed with a comment. A reply will also be make at
-  where you trigger the bot.
+  server will commit the report to this repository on the branch of
+  the tracking PR. A reply will also be make at where you trigger the
+  bot. You can merge or close the tracking PR at this point freely.
 
 
 ## How to benchmark Turing locally?

@@ -198,9 +198,9 @@ Hi @$user,
 
 The benchmark [$bm_name] job is finished.
 
-The report is committed in this commit: $repo@$commit_id or go to the tracking PR.
+The report is committed in this commit: $repo@$commit_id.
 
-You can see the report at $report_url.
+You can see the report at $report_url  or go to the tracking PR to see it.
 """
 
 # code templates
