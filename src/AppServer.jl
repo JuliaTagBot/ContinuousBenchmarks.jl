@@ -36,6 +36,14 @@ function bm_from_comment(data)
         create_comment(issue_repo, issue_no, :issue; params=params, auth=bot_auth)
         return
     end
+    try
+        gitbranches(turingpath(), branches)
+    catch ex # not all of the branches exist
+        params = Dict("body" => "@$user $ex")
+        create_comment(issue_repo, issue_no, :issue; params=params, auth=bot_auth)
+        return
+    end
+
     name = bm_name(branches)
 
     # create the branch

@@ -52,6 +52,31 @@ function send(benchmark, bm_info, report_file)
     create_comment(m[1], parse(Int, m[2]), :issue; params=params, auth=bot_auth)
 end
 
+function send_error(benchmark, bm_info, exc)
+    bot_auth = GitHub.authenticate(bot_token)
+    name = benchmark
+
+    # 1. find the tracking PR, comment on it
+    all_prs = GitHub.pull_requests(app_repo; auth=bot_auth)
+    tracking_pr = nothing
+    for item in  all_prs[1]
+        if item.title == name
+            tracking_pr = item
+            params = Dict("body" => Utils.bm_pr_error_content(exc))
+            create_comment(app_repo, item.number, :pr; params=params, auth=bot_auth)
+            break
+        end
+    end
+
+    # 2. find the trigger issue, comment it
+    issue_url = bm_info["trigger"]["issue_url"]
+    user = bm_info["trigger"]["user"]
+    reg = r".*://github.com/([^/]+/[^/]+)/issues/(\d+)"
+    m = match(reg, issue_url)
+    params = Dict("body" => Utils.bm_reply2_content(name, user, app_repo, exc))
+    create_comment(m[1], parse(Int, m[2]), :issue; params=params, auth=bot_auth)
+end
+
 function write_report!(bm_name, filename, branches::Vector, shas::Vector, base_branch="")
     report_md = generate_report(bm_name, branches, shas, base_branch)
     result_path = joinpath(result_dir(bm_name), filename)
