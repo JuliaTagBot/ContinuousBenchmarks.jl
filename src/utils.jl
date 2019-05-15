@@ -55,6 +55,7 @@ gitcurrentbranch(path) = cd(gitcurrentbranch, path)
 function gitbranches(branches)
     currentbranch = gitcurrentbranch()
     all_branches = drop2.(readlines(`git branch -al`))
+    run(`git fetch --all`)
     for brch in branches
         (brch in all_branches) && continue
         br_idx = findfirst(all_branches) do b endswith(b, "/" * brch) end
@@ -193,6 +194,14 @@ You can see the report at $report_url.
 If it has no issues, please consider to merge or close this PullRequest.
 """
 
+bm_pr_error_content(exc) = """
+An error occurred while running the benchmark:
+
+  $exc
+
+Please consider to fix it and trigger another one.
+"""
+
 bm_reply1_content(bm_name, user, repo, commit_id, report_url) = """
 Hi @$user,
 
@@ -202,6 +211,17 @@ The report is committed in this commit: $repo@$commit_id.
 
 You can see the report at $report_url  or go to the tracking PR to see it.
 """
+
+bm_reply2_content(bm_name, user, repo, exc) = """
+Hi @$user,
+
+I am sorry that an error has occurred while running the benchmark [$bm_name]:
+
+  $exc
+
+Please consider to fix it and trigger another one.
+"""
+
 
 # code templates
 const tmpl_code_bm_run = """

@@ -29,7 +29,13 @@ function run_bm(name::String)
     bm_file_content = GitHub.file(app_repo, "jobs/$(name).toml"; params=params, auth=bot_auth)
     content = String(base64decode(replace(bm_file_content.content, "\n" =>"")))
     bm_info = Pkg.TOML.parse(content)
-    report_path = local_benchmark(name, bm_info["benchmark"]["branches"])
+    report_path = nothing
+    try
+        report_path = local_benchmark(name, bm_info["benchmark"]["branches"])
+    catch ex
+        Reporter.send_error(name, bm_info, ex)
+        return
+    end
     Reporter.send(name, bm_info, report_path)
 end
 
