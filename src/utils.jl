@@ -48,7 +48,11 @@ githeadsha(path) = cd(githeadsha, path)
 function gitcurrentbranch()
     branches = readlines(`git branch`)
     ind = findfirst(x -> x[1] == '*', branches)
-    return drop2(branches[ind])
+    brname = drop2(branches[ind])
+    if brname[1] == '('
+        brname = snip7(githeadsha())
+    end
+    return brname
 end
 gitcurrentbranch(path) = cd(gitcurrentbranch, path)
 
