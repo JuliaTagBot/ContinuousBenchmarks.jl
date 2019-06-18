@@ -17,7 +17,7 @@ if !haskey(ENV, "CMDSTAN_HOME") || ENV["CMDSTAN_HOME"] == ""
 end
 
 Pkg.add(["FileIO", "JLD2"])
-Pkg.develop("Turing")
+# Pkg.add("Turing")
 
 # Generate data from simulations
 for (root, dirs, files) in walkdir(TuringBenchmarks.SIMULATIONS_DIR)
