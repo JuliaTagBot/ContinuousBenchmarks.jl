@@ -231,10 +231,14 @@ Please consider to fix it and trigger another one.
 const tmpl_code_bm_run = """
 using Pkg;
 
-Pkg.activate("{{{ :project_dir }}}");
-Pkg.instantiate()
-
-Pkg.develop(PackageSpec(path="{{{ :turing_path }}}"))
+for _ in 1:2
+  try
+    Pkg.activate("{{{ :project_dir }}}");
+    Pkg.instantiate()
+    Pkg.develop(PackageSpec(path="{{{ :turing_path }}}"))
+  catch
+  end
+end
 
 using CmdStan, Turing, TuringBenchmarks;
 CmdStan.set_cmdstan_home!(TuringBenchmarks.CMDSTAN_HOME);
