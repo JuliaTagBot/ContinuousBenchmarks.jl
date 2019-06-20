@@ -198,6 +198,14 @@ You can see the report at $report_url.
 If it has no issues, please consider to merge or close this PullRequest.
 """
 
+bm_commit_report_content(commit_id, report_url) = """
+The benchmark job for this commit is finished.
+
+The report is committed in this commit: TuringLang/TuringBenchmarks#$commit_id.
+
+You can see the report at $report_url.
+"""
+
 bm_pr_error_content(exc) = """
 An error occurred while running the benchmark:
 

@@ -71,7 +71,7 @@ function send_from_travis(benchmark, triggerer_cid, report_file)
         "jobs/$(name).report.md"
 
     # 2. find the trigger commit, comment on it
-    params = Dict("body" => Utils.bm_pr_report_content(commit_id, report_url))
+    params = Dict("body" => Utils.bm_commit_report_content(commit_id, report_url))
     create_comment("TuringLang/Turing.jl", triggerer_cid, :commit; params=params, auth=bot_auth)
 end
 
