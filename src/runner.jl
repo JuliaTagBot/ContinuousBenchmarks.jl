@@ -94,7 +94,7 @@ function run_benchmark(fileormodel; save_path="")
     julia_path = joinpath(Sys.BINDIR, Base.julia_exename())
     code = code_bm_run(data)
     job = `$julia_path -e $code`
-    @debug(job);
+    @info(job);
     run(job)
     @info("`$bm_path` ✓")
     return

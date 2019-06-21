@@ -14,7 +14,7 @@ for (root, dirs, files) in walkdir(TuringBenchmarks.BENCH_DIR)
     for file in files
         if TuringBenchmarks.should_run_benchmark(file)
             bm_file = abspath(joinpath(root, file))
-            Runner.run_benchmarks([bm_file], save_path=".")
+            Runner.run_benchmarks([bm_file], save_path="."; ignore_error=false)
         end
     end
 end
