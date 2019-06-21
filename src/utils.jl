@@ -248,7 +248,8 @@ for _ in 1:2
   end
 end
 
-using CmdStan, Turing, TuringBenchmarks;
+using Turing, TuringBenchmarks;
+using CmdStan;
 CmdStan.set_cmdstan_home!(TuringBenchmarks.CMDSTAN_HOME);
 
 include("{{{ :bm_file }}}");
