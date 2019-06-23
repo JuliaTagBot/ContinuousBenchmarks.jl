@@ -48,7 +48,11 @@ githeadsha(path) = cd(githeadsha, path)
 function gitcurrentbranch()
     branches = readlines(`git branch`)
     ind = findfirst(x -> x[1] == '*', branches)
-    return drop2(branches[ind])
+    brname = drop2(branches[ind])
+    if brname[1] == '('
+        brname = snip7(githeadsha())
+    end
+    return brname
 end
 gitcurrentbranch(path) = cd(gitcurrentbranch, path)
 
@@ -194,6 +198,14 @@ You can see the report at $report_url.
 If it has no issues, please consider to merge or close this PullRequest.
 """
 
+bm_commit_report_content(commit_id, report_url) = """
+The benchmark job for this commit is finished.
+
+The report is committed in this commit: TuringLang/TuringBenchmarks#$commit_id.
+
+You can see the report at $report_url.
+"""
+
 bm_pr_error_content(exc) = """
 An error occurred while running the benchmark:
 
@@ -227,12 +239,17 @@ Please consider to fix it and trigger another one.
 const tmpl_code_bm_run = """
 using Pkg;
 
-Pkg.activate("{{{ :project_dir }}}");
-Pkg.instantiate()
+for _ in 1:2
+  try
+    Pkg.activate("{{{ :project_dir }}}");
+    Pkg.instantiate()
+    Pkg.develop(PackageSpec(path="{{{ :turing_path }}}"))
+  catch
+  end
+end
 
-Pkg.develop(PackageSpec(path="{{{ :turing_path }}}"))
-
-using CmdStan, Turing, TuringBenchmarks;
+using Turing, TuringBenchmarks;
+using CmdStan;
 CmdStan.set_cmdstan_home!(TuringBenchmarks.CMDSTAN_HOME);
 
 include("{{{ :bm_file }}}");

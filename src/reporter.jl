@@ -8,8 +8,8 @@ using ..Config
 using ..Utils
 
 const app_repo = Config.get_config("github.app_repo")
-if get(ENV, "ENV", "priv") == "travis"
-    const bot_token = get(ENV, "GITHUB_TOKEN", "none")
+if get(ENV, "TRAVIS", "false") == "true"
+    const bot_token = get(ENV, "TuringBenchBot_GITHUB_TOKEN", "none")
 else
     const bot_token = Config.get_config("github.token")
 end
@@ -51,6 +51,30 @@ function send(benchmark, bm_info, report_file)
     params = Dict("body" => Utils.bm_reply1_content(name, user, app_repo, commit_id, report_url))
     create_comment(m[1], parse(Int, m[2]), :issue; params=params, auth=bot_auth)
 end
+
+function send_from_travis(benchmark, triggerer_cid, report_file)
+    bot_auth = GitHub.authenticate(bot_token)
+    name = benchmark
+    report_branch = "report" # TODO: commit report to which branch
+
+    # 1. commit the report
+    content = open(report_file) do io read(io, String) end
+    content = base64encode(content)
+    params = Dict("branch" => report_branch,
+                  "message" => "[skip ci] $(name) Report",
+                  "content" => content)
+
+    commit = GitHub.create_file(app_repo, "jobs/$(name).report.md";
+                                params=params, auth=bot_auth)
+    commit_id = commit["commit"].sha
+    report_url = "https://github.com/$app_repo/blob/$report_branch/" *
+        "jobs/$(name).report.md"
+
+    # 2. find the trigger commit, comment on it
+    params = Dict("body" => Utils.bm_commit_report_content(commit_id, report_url))
+    create_comment("TuringLang/Turing.jl", triggerer_cid, :commit; params=params, auth=bot_auth)
+end
+
 
 function send_error(benchmark, bm_info, exc)
     bot_auth = GitHub.authenticate(bot_token)

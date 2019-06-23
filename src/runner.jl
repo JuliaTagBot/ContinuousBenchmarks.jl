@@ -94,10 +94,15 @@ function run_benchmark(fileormodel; save_path="")
     julia_path = joinpath(Sys.BINDIR, Base.julia_exename())
     code = code_bm_run(data)
     job = `$julia_path -e $code`
-    @debug(job);
+    @info(job);
     run(job)
     @info("`$bm_path` ✓")
     return
+end
+
+function run_bm_on_travis(name, branch_names, cid, turing_path=turingpath())
+    report_path = local_benchmark(name, branch_names, turing_path)
+    Reporter.send_from_travis(name, cid, report_path)
 end
 
 end

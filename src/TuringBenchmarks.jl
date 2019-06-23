@@ -113,10 +113,19 @@ end
 print_log(logd::Dict, monitor=[]) = print(stringify_log(logd, monitor))
 
 function send_log(logd::Dict, monitor=[])
-    benchmarks_head = githeadsha((Base.@__DIR__) |> dirname)
+    benchmarks_head = ""
+    turing_head = ""
+    try
+        benchmarks_head = githeadsha((Base.@__DIR__) |> dirname)
+        turing_head = githeadsha(turingpath())
+    catch err
+        @warn("Error occurs while sending log")
+        if :msg in fieldnames(typeof(err))
+            @warn(err.msg)
+        end
+        return
+    end
     @assert benchmarks_head != ""
-
-    turing_head = githeadsha(turingpath())
     @assert turing_head != ""
 
     time_str = Dates.format(now(), "dd-u-yyyy-HH-MM-SS")
