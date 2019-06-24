@@ -19,6 +19,10 @@ function load()
     if path == nothing
         env = get(ENV, "ENV", "priv")
         path = pwd() * "/config/app.$(env).toml"
+        if get(ENV, "TRAVIS", "false") == "true"
+            env = "travis"
+            path = ((@__DIR__) |> dirname) * "/config/app.$(env).toml"
+        end
     end
     load(path)
 end

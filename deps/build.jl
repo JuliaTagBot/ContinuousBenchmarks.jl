@@ -17,10 +17,10 @@ if !haskey(ENV, "CMDSTAN_HOME") || ENV["CMDSTAN_HOME"] == ""
 end
 
 Pkg.add(["FileIO", "JLD2"])
-Pkg.develop("Turing")
 
 # Generate data from simulations
-for (root, dirs, files) in walkdir(TuringBenchmarks.SIMULATIONS_DIR)
+const SIMULATIONS_DIR = abspath(joinpath(@__DIR__, "..", "simulations"))
+for (root, dirs, files) in walkdir(SIMULATIONS_DIR)
     for file in files
         if splitext(file)[2] == ".jl"
             filepath = joinpath(root, file)

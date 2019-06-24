@@ -1,29 +1,20 @@
 using Pkg
-Pkg.develop("Turing")
 Pkg.activate(splitdir(@__DIR__)[1])
 Pkg.instantiate()
 
-using HTTP, JSON, TuringBenchmarks
+# run(`git clone https://github.com/TuringLang/Turing.jl.git ../Turing.jl`)
+# try pkg"develop ../Turing.jl" catch end
+# try pkg"develop ../Turing.jl" catch end
 
-using TuringBenchmarks: snipsha, getturingpath, LOG_URL
+using TuringBenchmarks
+using TuringBenchmarks.Runner
+# Runner.local_benchmark("TEST", ("master", "master"))
 
-juliaexe_path = joinpath(Sys.BINDIR, Base.julia_exename())
-shas_filepath = abspath(joinpath("..", "src", "bench_shas.txt"))
-if isfile(shas_filepath) && length(readlines(shas_filepath)) > 0
-    shas = strip.(readlines(shas_filepath))
-    branch_name = join(snipsha.(shas), "_")
-    HTTP.open("POST", LOG_URL) do io
-        write(io, JSON.json(Dict("start" => branch_name)))
-    end
-    for sha in shas
-        cd(getturingpath()) do 
-            run(`git checkout $sha`)
+for (root, dirs, files) in walkdir(TuringBenchmarks.BENCH_DIR)
+    for file in files
+        if TuringBenchmarks.should_run_benchmark(file)
+            bm_file = abspath(joinpath(root, file))
+            Runner.run_benchmarks([bm_file], save_path="."; ignore_error=false)
         end
-        run(`$(juliaexe_path) -e 'include("benchmarks.jl"); runbenchmarks(send=true)'`)
     end
-    HTTP.open("POST", LOG_URL) do io
-        write(io, JSON.json(Dict("finish" => branch_name)))
-    end
-else
-    run(`$(juliaexe_path) -e 'include("benchmarks.jl"); runbenchmarks(send=false)'`)
 end
