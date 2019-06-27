@@ -5,6 +5,7 @@ __precompile__(false)
 using Statistics, Dates, HTTP, JSON
 
 export @tbenchmark,
+    @tbenchmark_expr,
     benchmark_models,
     benchmark_files,
     get_stan_time,
@@ -126,6 +127,13 @@ macro tbenchmark(alg, model, data)
         chain, t_elapsed, mem, gctime, memallocs  = @timed sample(model_f, $alg)
         $(string(alg)), t_elapsed, mem, chain, deepcopy(chain)
         end)
+end
+
+macro tbenchmark_expr(name, expr)
+    quote
+        chain, t_elapsed, mem, gctime, memallocs  = @timed $(esc(expr))
+        $(string(name)), t_elapsed, mem, chain, deepcopy(chain)
+    end
 end
 
 # Build logd from Turing chain
