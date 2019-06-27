@@ -12,7 +12,7 @@ export @tbenchmark,
     send_log,
     print_log,
     getbenchpath,
-    should_run_benchmark
+    set_benchmark_files
 
 # using StatPlots
 # using DataFrames
@@ -63,14 +63,6 @@ const default_model_list = ["gdemo-geweke",
                             "binormal",
                             "kid"]
 
-function should_run_benchmark(filename)
-    splitext(filename)[2] != ".jl" && return false
-    filename ∈ inactive_benchmarks && return false
-    filename ∈ broken_benchmarks && return false
-    occursin("stan", filename) && return false
-    return true
-end
-
 const MODELS_DIR = abspath(joinpath(@__DIR__, "..", "models"))
 const STAN_MODELS_DIR = abspath(joinpath(MODELS_DIR, "stan-models"))
 
@@ -80,11 +72,49 @@ const STAN_DATA_DIR = abspath(joinpath(DATA_DIR, "stan-data"))
 const BENCH_DIR = abspath(joinpath(@__DIR__, "..", "benchmarks"))
 const SIMULATIONS_DIR = abspath(joinpath(@__DIR__, "..", "simulations"))
 
+const EXTERNAL_BENCHMARKS_SOURCE = Base.RefValue{Union{Nothing, String}}(nothing)
+
 include("config.jl")
 include("utils.jl")
 using .Utils
 
 const CMDSTAN_HOME = cmdstan_home()
+
+function should_run_benchmark(filename)
+    splitext(filename)[2] != ".jl" && return false
+    filename ∈ inactive_benchmarks && return false
+    filename ∈ broken_benchmarks && return false
+    occursin("stan", filename) && return false
+    return true
+end
+
+function set_benchmark_files(source::String)
+    EXTERNAL_BENCHMARKS_SOURCE[] = source
+end
+
+function get_benchmark_files()
+    if EXTERNAL_BENCHMARKS_SOURCE[] != nothing
+        try
+            source = EXTERNAL_BENCHMARKS_SOURCE[]
+            eval(Meta.parse("""include("$source")"""))
+            return BENCHMARK_FILES
+        catch
+            @warn "No benchmarks defined in $(EXTERNAL_BENCHMARKS_SOURCE[])"
+        end
+        return []
+    else
+        bm_files = Vector{String}()
+        for (root, dirs, files) in walkdir(BENCH_DIR)
+            for file in files
+                if should_run_benchmark(file)
+                    bm_file = abspath(joinpath(root, file))
+                    push!(bm_files, bm_file)
+                end
+            end
+        end
+        return bm_files
+    end
+end
 
 # Run benchmark
 macro tbenchmark(alg, model, data)

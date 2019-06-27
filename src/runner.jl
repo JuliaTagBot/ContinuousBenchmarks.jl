@@ -8,7 +8,7 @@ using ..Utils
 using ..Reporter
 using ..Config
 
-using ..TuringBenchmarks: BENCH_DIR, default_model_list, should_run_benchmark
+using ..TuringBenchmarks: get_benchmark_files, default_model_list
 
 const app_repo = Config.get_config("github.app_repo")
 
@@ -50,13 +50,8 @@ function local_benchmark(name, branch_names, turing_path=turingpath())
         for (branch, sha) in zip(branch_names, shas)
             onbranch(turing_path, branch) do
                 isdir(snip7(sha)) || mkdir(snip7(sha))
-                for (root, dirs, files) in walkdir(BENCH_DIR)
-                    for file in files
-                        if should_run_benchmark(file)
-                            bm_file = abspath(joinpath(root, file))
-                            run_benchmarks([bm_file], save_path=snip7(sha))
-                        end
-                    end
+                for bm_file in get_benchmark_files()
+                    run_benchmarks([bm_file], save_path=snip7(sha))
                 end
             end
         end
