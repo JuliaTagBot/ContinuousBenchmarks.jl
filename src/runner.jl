@@ -46,19 +46,17 @@ function local_benchmark(name, branch_names, turing_path=turingpath())
     result_path = result_dir(name)
     shas = gitbranchshas(turing_path, branch_names)
 
-    cd(result_path) do
-        for (branch, sha) in zip(branch_names, shas)
-            onbranch(turing_path, branch) do
-                isdir(snip7(sha)) || mkdir(snip7(sha))
-                for bm_file in get_benchmark_files()
-                    run_benchmarks([bm_file], save_path=snip7(sha))
-                end
+    for (branch, sha) in zip(branch_names, shas)
+        onbranch(turing_path, branch) do
+            isdir(snip7(sha)) || mkdir(snip7(sha))
+            for bm_file in get_benchmark_files()
+                run_benchmarks([bm_file], save_path=joinpath(result_path, snip7(sha)))
             end
         end
-        Reporter.write_report!(name, "report.md", branch_names, shas)
     end
-
-    return joinpath(result_path, "report.md")
+    report_path = joinpath(result_path, "report.md")
+    Reporter.write_report!(name, report_path, branch_names, shas)
+    return report_path
 end
 
 function run_benchmarks(files=default_model_list; ignore_error=true, save_path="")
@@ -89,7 +87,7 @@ function run_benchmark(fileormodel; save_path="")
     )
     julia_path = joinpath(Sys.BINDIR, Base.julia_exename())
     code = code_bm_run(data)
-    job = `$julia_path -e $code`
+    job = `$julia_path --project=. -e $code`
     @info(job);
     run(job)
     @info("`$bm_path` ✓")
