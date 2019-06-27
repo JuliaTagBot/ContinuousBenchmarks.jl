@@ -80,9 +80,10 @@ end
 function run_benchmark(fileormodel; save_path="")
     bm_path = find_bm_file(fileormodel)
     @info("Benchmarking `$bm_path` ... ")
+    @show pwd()
     data = Dict(
         :project_dir => dirname(@__DIR__),
-        :turing_path => turingpath(),
+        :turing_path => pwd(),
         :bm_file => bm_path,
         :save_path => save_path,
     )

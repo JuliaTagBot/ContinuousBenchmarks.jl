@@ -4,7 +4,8 @@ __precompile__(false)
 
 using Statistics, Dates, HTTP, JSON
 
-export @tbenchmark,
+export @benchmarkd,
+    @tbenchmark,
     @tbenchmark_expr,
     benchmark_models,
     benchmark_files,
@@ -99,8 +100,9 @@ function get_benchmark_files()
             source = EXTERNAL_BENCHMARKS_SOURCE[]
             eval(Meta.parse("""include("$source")"""))
             return BENCHMARK_FILES
-        catch
+        catch ex
             @warn "No benchmarks defined in $(EXTERNAL_BENCHMARKS_SOURCE[])"
+            rethrow(ex)
         end
         return []
     else
@@ -117,7 +119,16 @@ function get_benchmark_files()
     end
 end
 
-# Run benchmark
+## Run benchmark
+# 1. common
+macro benchmarkd(name, expr)
+    quote
+        result, t_elapsed, mem, gctime, memallocs  = @timed $(esc(expr))
+        $(string(name)), t_elapsed, mem, result
+    end
+end
+
+# 2. for Turing
 macro tbenchmark(alg, model, data)
     model = :(($model isa String ? eval(Meta.parse($model)) : $model))
     model_dfn = (data isa Expr && data.head == :tuple) ?
