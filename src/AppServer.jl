@@ -10,6 +10,7 @@ using Logging
 using ..Config
 using ..Utils
 using ..Runner
+using ..TuringBenchmarks: PROJECT_PATH
 
 const event_queue = Channel{Any}(1024)
 const httpsock = Ref{Sockets.TCPServer}()
@@ -37,7 +38,7 @@ function bm_from_comment(data)
         return
     end
     try
-        gitbranches(turingpath(), branches)
+        gitbranches(PROJECT_PATH[], branches)
     catch ex # not all of the branches exist
         params = Dict("body" => "@$user $ex")
         create_comment(issue_repo, issue_no, :issue; params=params, auth=bot_auth)

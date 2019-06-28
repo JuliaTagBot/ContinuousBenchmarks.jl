@@ -74,6 +74,7 @@ const STAN_DATA_DIR = abspath(joinpath(DATA_DIR, "stan-data"))
 const BENCH_DIR = abspath(joinpath(@__DIR__, "..", "benchmarks"))
 const SIMULATIONS_DIR = abspath(joinpath(@__DIR__, "..", "simulations"))
 
+const PROJECT_PATH = Base.RefValue{Union{Nothing, String}}(nothing)
 const EXTERNAL_BENCHMARKS_SOURCE = Base.RefValue{Union{Nothing, String}}(nothing)
 
 include("config.jl")
@@ -81,6 +82,10 @@ include("utils.jl")
 using .Utils
 
 const CMDSTAN_HOME = cmdstan_home()
+
+function set_project_path(project_path::String)
+    PROJECT_PATH[] = project_path
+end
 
 function should_run_benchmark(filename)
     splitext(filename)[2] != ".jl" && return false
@@ -166,7 +171,7 @@ function send_log(logd::Dict, monitor=[])
     turing_head = ""
     try
         benchmarks_head = githeadsha((Base.@__DIR__) |> dirname)
-        turing_head = githeadsha(turingpath())
+        turing_head = githeadsha(PROJECT_PATH[])
     catch err
         @warn("Error occurs while sending log")
         if :msg in fieldnames(typeof(err))

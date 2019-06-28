@@ -20,7 +20,6 @@ export
     gitbranchsha,
     gitbranchshas,
     # path
-    turingpath,
     find_bm_file,
     result_filename,
     result_dir,
@@ -108,16 +107,6 @@ if !haskey(ENV, "CMDSTAN_HOME") || ENV["CMDSTAN_HOME"] == ""
     ENV["CMDSTAN_HOME"] = local_cmdstan_home
 end
 cmdstan_home() = ENV["CMDSTAN_HOME"]
-
-function turingpath()
-    path = Config.get_config("turing.path")
-    if path != nothing
-        return render(path, project_root=dirname(@__DIR__))
-    end
-    juliaexe_path = joinpath(Sys.BINDIR, Base.julia_exename())
-    turing_jl = readchomp(`$(juliaexe_path) -e "using Turing; println(pathof(Turing))"`)
-    turing_jl |> dirname |> dirname
-end
 
 function find_bm_file(name_or_path)
     name_or_path = replace(name_or_path, "\\"=>"\\\\")

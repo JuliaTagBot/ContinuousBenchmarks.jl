@@ -8,7 +8,7 @@ using ..Utils
 using ..Reporter
 using ..Config
 
-using ..TuringBenchmarks: get_benchmark_files, default_model_list
+using ..TuringBenchmarks: get_benchmark_files, default_model_list, PROJECT_PATH
 
 const app_repo = Config.get_config("github.app_repo")
 
@@ -39,15 +39,15 @@ function run_bm(name::String)
     Reporter.send(name, bm_info, report_path)
 end
 
-function local_benchmark(name, branch_names, turing_path=turingpath())
+function local_benchmark(name, branch_names)
     @assert length(branch_names) > 1
     branch_names = [branch_names...]
-    gitbranches(turing_path, branch_names)
+    gitbranches(PROJECT_PATH[], branch_names)
     result_path = result_dir(name)
-    shas = gitbranchshas(turing_path, branch_names)
+    shas = gitbranchshas(PROJECT_PATH[], branch_names)
 
     for (branch, sha) in zip(branch_names, shas)
-        onbranch(turing_path, branch) do
+        onbranch(PROJECT_PATH[], branch) do
             isdir(snip7(sha)) || mkdir(snip7(sha))
             for bm_file in get_benchmark_files()
                 run_benchmarks([bm_file], save_path=joinpath(result_path, snip7(sha)))
@@ -81,21 +81,21 @@ function run_benchmark(fileormodel; save_path="")
     @show pwd()
     data = Dict(
         :project_dir => dirname(@__DIR__),
-        :turing_path => pwd(),
+        :project_path => PROJECT_PATH[],
         :bm_file => bm_path,
         :save_path => save_path,
     )
     julia_path = joinpath(Sys.BINDIR, Base.julia_exename())
     code = code_bm_run(data)
-    job = `$julia_path --project=. -e $code`
+    job = `$julia_path --project=$(PROJECT_PATH[]) -e $code`
     @info(job);
     run(job)
     @info("`$bm_path` ✓")
     return
 end
 
-function run_bm_on_travis(name, branch_names, cid, turing_path=turingpath())
-    report_path = local_benchmark(name, branch_names, turing_path)
+function run_bm_on_travis(name, branch_names, cid)
+    report_path = local_benchmark(name, branch_names)
     Reporter.send_from_travis(name, cid, report_path)
 end
 
