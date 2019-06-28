@@ -2,6 +2,7 @@ using Pkg
 project_root = (@__DIR__) |> dirname
 Pkg.activate()
 Pkg.instantiate()
+Pkg.resovle()
 
 # run(`git clone https://github.com/TuringLang/Turing.jl.git ../Turing.jl`)
 # try pkg"develop ../Turing.jl" catch end

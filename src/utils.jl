@@ -208,7 +208,7 @@ Please consider to fix it and trigger another one.
 # code templates
 const tmpl_code_bm_run = """
 using TuringBenchmarks;
-using JSON;
+using TuringBenchmarks.JSON;
 
 include("{{{ :bm_file }}}");
 log_file = TuringBenchmarks.Utils.result_filename(LOG_DATA) * ".json"
