@@ -2,97 +2,23 @@ module TuringBenchmarks
 
 __precompile__(false)
 
-using Statistics, Dates, HTTP, JSON
+using Dates, HTTP, JSON
 
 export @benchmarkd,
-    @tbenchmark,
-    @tbenchmark_expr,
-    benchmark_models,
-    benchmark_files,
-    get_stan_time,
-    build_logd,
-    send_log,
-    print_log,
-    getbenchpath,
-    set_benchmark_files
-
-# using StatPlots
-# using DataFrames
-
-broken_benchmarks = [# Errors
-                     "dyes.run.jl",
-                     "kid.run.jl",
-                     "negative_binomial.run.jl",
-                     "normal-mixture.run.jl",
-                     "school8.run.jl",
-                     "binomial.run.jl",
-                     "binormal.run.jl",
-                     "MoC.run.jl",
-                     "sv.run.jl",
-                     "gdemo-geweke.run.jl",
-                     "profile.jl", # segfaults
-                     # Freezes
-                     "lda.run.jl",
-                     # to be fixed
-                     "bernoulli.run.jl",
-                     "gauss.run.jl",
-                     "gdemo.run.jl",
-                     ]
-
-# Don't have send_log
-inactive_benchmarks = ["binomial.run.jl",
-                       "change-point.jl",
-                       "dyes.run.jl",
-                       "gdemo-geweke.run.jl",
-                       "negative_binomial.run.jl",
-                       "normal-loc.run.jl",
-                       "ode.jl",
-                       "optimization.jl",
-                       "profile.jl",
-                       "sv.run.jl",
-                       ]
-
-# NOTE:
-# put Stan models before Turing ones if you want to compare them in print_log
-const default_model_list = ["gdemo-geweke",
-                            # "normal-loc",
-                            "normal-mixture",
-                            "gdemo",
-                            "gauss",
-                            "bernoulli",
-                            # "negative-binomial",
-                            "school8",
-                            "binormal",
-                            "kid"]
-
-const MODELS_DIR = abspath(joinpath(@__DIR__, "..", "models"))
-const STAN_MODELS_DIR = abspath(joinpath(MODELS_DIR, "stan-models"))
-
-const DATA_DIR = abspath(joinpath(@__DIR__, "..", "data"))
-const STAN_DATA_DIR = abspath(joinpath(DATA_DIR, "stan-data"))
-
-const BENCH_DIR = abspath(joinpath(@__DIR__, "..", "benchmarks"))
-const SIMULATIONS_DIR = abspath(joinpath(@__DIR__, "..", "simulations"))
-
-const PROJECT_PATH = Base.RefValue{Union{Nothing, String}}(nothing)
-const EXTERNAL_BENCHMARKS_SOURCE = Base.RefValue{Union{Nothing, String}}(nothing)
+    set_project_path,
+    set_benchmark_files,
+    get_benchmark_files
 
 include("config.jl")
 include("utils.jl")
 using .Utils
 
-const CMDSTAN_HOME = cmdstan_home()
+const BENCH_DIR = abspath(joinpath(@__DIR__, "..", "benchmarks"))
+const PROJECT_PATH = Base.RefValue{Union{Nothing, String}}(nothing)
+const EXTERNAL_BENCHMARKS_SOURCE = Base.RefValue{Union{Nothing, String}}(nothing)
 
 function set_project_path(project_path::String)
     PROJECT_PATH[] = project_path
-end
-
-function should_run_benchmark(filename)
-    splitext(filename)[2] != ".jl" && return false
-    filename ∈ inactive_benchmarks && return false
-    filename ∈ broken_benchmarks && return false
-    occursin("stan", filename) && return false
-    return true
 end
 
 function set_benchmark_files(source::String)
@@ -107,14 +33,13 @@ function get_benchmark_files()
             return BENCHMARK_FILES
         catch ex
             @warn "No benchmarks defined in $(EXTERNAL_BENCHMARKS_SOURCE[])"
-            rethrow(ex)
         end
         return []
     else
         bm_files = Vector{String}()
         for (root, dirs, files) in walkdir(BENCH_DIR)
             for file in files
-                if should_run_benchmark(file)
+                if file == "example.jl" # only run example by default
                     bm_file = abspath(joinpath(root, file))
                     push!(bm_files, bm_file)
                 end
@@ -125,72 +50,15 @@ function get_benchmark_files()
 end
 
 ## Run benchmark
-# 1. common
 macro benchmarkd(name, expr)
     quote
         result, t_elapsed, mem, gctime, memallocs  = @timed $(esc(expr))
-        $(string(name)), t_elapsed, mem, result
+        $(string(name)), result, t_elapsed, mem, gctime, memallocs
     end
 end
 
-# 2. for Turing
-macro tbenchmark(alg, model, data)
-    model = :(($model isa String ? eval(Meta.parse($model)) : $model))
-    model_dfn = (data isa Expr && data.head == :tuple) ?
-        :(model_f = $model($(data)...)) : model_f = :(model_f = $model($data))
-    esc(quote
-        $model_dfn
-        chain, t_elapsed, mem, gctime, memallocs  = @timed sample(model_f, $alg)
-        $(string(alg)), t_elapsed, mem, chain, deepcopy(chain)
-        end)
-end
 
-macro tbenchmark_expr(name, expr)
-    quote
-        chain, t_elapsed, mem, gctime, memallocs  = @timed $(esc(expr))
-        $(string(name)), t_elapsed, mem, chain, deepcopy(chain)
-    end
-end
-
-# Build logd from Turing chain
-function build_logd(name::String, engine::String, time, mem, tchain, _)
-    mn(c, v) = mean(convert(Array, c[Symbol(v)][min(1001, 9*end÷10):end]))
-    turing_data = try
-        Dict(v => mn(tchain, v) for v in keys(tchain))
-    catch
-        string(tchain)[1:min(700, end)]
-    end
-    Dict(
-        "name" => name,
-        "engine" => engine,
-        "time" => time,
-        "mem" => mem,
-        "turing" => turing_data
-    )
-end
-
-print_log(logd::Dict, monitor=[]) = print(stringify_log(logd, monitor))
-
-function send_log(logd::Dict, monitor=[])
-    project_dir = unsafe_string(Base.JLOptions().project)
-    project_head = ""
-    try
-        project_head = githeadsha(project_dir)
-    catch err
-        @warn("Error occurs while sending log")
-        if :msg in fieldnames(typeof(err))
-            @warn(err.msg)
-        end
-        return
-    end
-    @assert project_head != ""
-
-    time_str = Dates.format(now(), "dd-u-yyyy-HH-MM-SS")
-    logd["created"] = time_str
-    logd["project_commit"] = project_head
-end
-
-
+include("turing-tools.jl")
 include("reporter.jl")
 include("runner.jl")
 include("AppServer.jl")

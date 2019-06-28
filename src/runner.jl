@@ -8,7 +8,7 @@ using ..Utils
 using ..Reporter
 using ..Config
 
-using ..TuringBenchmarks: get_benchmark_files, default_model_list, PROJECT_PATH
+using ..TuringBenchmarks: get_benchmark_files, PROJECT_PATH
 
 const app_repo = Config.get_config("github.app_repo")
 
@@ -60,7 +60,7 @@ function local_benchmark(name, branch_names)
     return report_path
 end
 
-function run_benchmarks(files=default_model_list; ignore_error=true, save_path="")
+function run_benchmarks(files; ignore_error=true, save_path="")
     @info("Turing benchmarking started.")
     for file in files
         try
@@ -70,16 +70,14 @@ function run_benchmarks(files=default_model_list; ignore_error=true, save_path="
             if :msg in fieldnames(typeof(err))
                 @error(err.msg)
             end
-            !ignore_error && throw(err)
+            !ignore_error && rethrow(err)
         end
     end
     @info("Turing benchmarking completed.")
 end
 
-function run_benchmark(fileormodel; save_path="")
-    bm_path = find_bm_file(fileormodel)
+function run_benchmark(bm_path; save_path="")
     @info("Benchmarking `$bm_path` ... ")
-    @show pwd()
     data = Dict(
         :project_dir => dirname(@__DIR__),
         :project_path => PROJECT_PATH[],

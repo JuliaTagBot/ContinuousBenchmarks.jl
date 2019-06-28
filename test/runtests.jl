@@ -1,5 +1,6 @@
 using Pkg
-Pkg.activate(splitdir(@__DIR__)[1])
+project_root = (@__DIR__) |> dirname
+Pkg.activate()
 Pkg.instantiate()
 
 # run(`git clone https://github.com/TuringLang/Turing.jl.git ../Turing.jl`)
@@ -8,13 +9,9 @@ Pkg.instantiate()
 
 using TuringBenchmarks
 using TuringBenchmarks.Runner
-# Runner.local_benchmark("TEST", ("master", "master"))
 
-for (root, dirs, files) in walkdir(TuringBenchmarks.BENCH_DIR)
-    for file in files
-        if TuringBenchmarks.should_run_benchmark(file)
-            bm_file = abspath(joinpath(root, file))
-            Runner.run_benchmarks([bm_file], save_path="."; ignore_error=false)
-        end
-    end
+set_project_path(project_root)
+
+for bm_file in get_benchmark_files()
+    Runner.run_benchmarks([bm_file], save_path="."; ignore_error=false)
 end

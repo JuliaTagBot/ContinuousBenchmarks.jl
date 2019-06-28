@@ -4,7 +4,6 @@ using Dates
 using JSON
 using Mustache
 
-using ..TuringBenchmarks: BENCH_DIR
 using ..Config
 
 export
@@ -20,10 +19,8 @@ export
     gitbranchsha,
     gitbranchshas,
     # path
-    find_bm_file,
     result_filename,
     result_dir,
-    cmdstan_home,
     # bm
     benchmark_branches,
     bm_name,
@@ -98,22 +95,6 @@ gitbranchshas(path, branches) = gitbranchsha.((path,), branches)
 # path utils
 
 project_root = (@__DIR__) |> dirname
-local_cmdstan_home = abspath(joinpath(project_root, "cmdstan"))
-
-if !haskey(ENV, "CMDSTAN_HOME") || ENV["CMDSTAN_HOME"] == ""
-    if !isdir(local_cmdstan_home)
-        @warn "Please build package TuringBenchmarks to install CmdStan locally."
-    end
-    ENV["CMDSTAN_HOME"] = local_cmdstan_home
-end
-cmdstan_home() = ENV["CMDSTAN_HOME"]
-
-function find_bm_file(name_or_path)
-    name_or_path = replace(name_or_path, "\\"=>"\\\\")
-    occursin("/", name_or_path) && return name_or_path
-    endswith(name_or_path, ".jl") && return name_or_path
-    joinpath(BENCH_DIR, "$(name_or_path).run.jl")
-end
 
 function result_filename(data)
     filename = join([data["name"], data["engine"]], "_")
@@ -227,14 +208,11 @@ Please consider to fix it and trigger another one.
 # code templates
 const tmpl_code_bm_run = """
 using TuringBenchmarks;
-using CmdStan;
-CmdStan.set_cmdstan_home!(TuringBenchmarks.CMDSTAN_HOME);
+using JSON;
 
 include("{{{ :bm_file }}}");
-
-using JSON;
-log_file = TuringBenchmarks.Utils.result_filename(logd) * ".json"
-cd(()->write(log_file, JSON.json(logd, 2)), "{{{ :save_path }}}")
+log_file = TuringBenchmarks.Utils.result_filename(LOG_DATA) * ".json"
+cd(()->write(log_file, JSON.json(LOG_DATA, 2)), "{{{ :save_path }}}")
 """
 code_bm_run(data) = render(tmpl_code_bm_run, data)
 
