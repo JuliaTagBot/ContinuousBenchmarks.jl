@@ -2,7 +2,7 @@ module TuringBenchmarks
 
 __precompile__(false)
 
-using Dates, HTTP, JSON
+using JSON
 
 export @benchmarkd,
     set_project_path,

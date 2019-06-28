@@ -1,6 +1,10 @@
 module TuringTools
 # Tools for Turing
 
+using Dates
+
+using ..Utils
+
 export @tbenchmark,
     @tbenchmark_expr,
     build_log_data,
@@ -31,11 +35,9 @@ function set_log_info!(log_data::Dict, monitor=[])
     try
         project_head = githeadsha(project_dir)
     catch err
-        @warn("Error occurs while sending log")
-        if :msg in fieldnames(typeof(err))
-            @warn(err.msg)
-        end
-        return
+        @warn("Error: failed to get commit info from $project_dir")
+        (:msg in fieldnames(typeof(err))) ? @warn(err.msg) : @warn(err)
+        return log_data
     end
     @assert project_head != ""
 
