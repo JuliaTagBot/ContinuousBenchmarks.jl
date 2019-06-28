@@ -158,7 +158,7 @@ function build_logd(name::String, engine::String, time, mem, tchain, _)
     turing_data = try
         Dict(v => mn(tchain, v) for v in keys(tchain))
     catch
-        string(tchain)
+        string(tchain)[1:min(700, end)]
     end
     Dict(
         "name" => name,
@@ -172,11 +172,10 @@ end
 print_log(logd::Dict, monitor=[]) = print(stringify_log(logd, monitor))
 
 function send_log(logd::Dict, monitor=[])
-    benchmarks_head = ""
-    turing_head = ""
+    project_dir = unsafe_string(Base.JLOptions().project)
+    project_head = ""
     try
-        benchmarks_head = githeadsha((Base.@__DIR__) |> dirname)
-        turing_head = githeadsha(PROJECT_PATH[])
+        project_head = githeadsha(project_dir)
     catch err
         @warn("Error occurs while sending log")
         if :msg in fieldnames(typeof(err))
@@ -184,13 +183,11 @@ function send_log(logd::Dict, monitor=[])
         end
         return
     end
-    @assert benchmarks_head != ""
-    @assert turing_head != ""
+    @assert project_head != ""
 
     time_str = Dates.format(now(), "dd-u-yyyy-HH-MM-SS")
     logd["created"] = time_str
-    logd["turing_commit"] = turing_head
-    logd["bench_commit"] = benchmarks_head
+    logd["project_commit"] = project_head
 end
 
 

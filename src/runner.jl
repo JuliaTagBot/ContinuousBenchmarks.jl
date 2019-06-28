@@ -48,9 +48,10 @@ function local_benchmark(name, branch_names)
 
     for (branch, sha) in zip(branch_names, shas)
         onbranch(PROJECT_PATH[], branch) do
-            isdir(snip7(sha)) || mkdir(snip7(sha))
+            save_path = joinpath(result_path, snip7(sha))
+            isdir(save_path) || mkdir(save_path)
             for bm_file in get_benchmark_files()
-                run_benchmarks([bm_file], save_path=joinpath(result_path, snip7(sha)))
+                run_benchmarks([bm_file], save_path=save_path)
             end
         end
     end

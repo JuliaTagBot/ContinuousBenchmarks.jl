@@ -337,8 +337,6 @@ const tmpl_report_md = """
 - **{{{ name }}}**({{ sha }}) {{#is_base}}**[BASE_BRANCH]**{{/is_base}}
 {{/branches}}
 
-**TuringBenchmarks Commit**: {{ bench_commit }}
-
 ## Results Table:
 
 Below is a table of this job's results, obtained by running the
@@ -403,9 +401,6 @@ function generate_report(bm_name, branches, shas, base_branch = "")
         base_result_json = read(open(base_result_file), String)
         base_result_data = JSON.parse(base_result_json)
         base_time = round(base_result_data["time"] * 1000, digits = 3)
-        if haskey(base_result_data, "bench_commit")
-            data["bench_commit"] = base_result_data["bench_commit"] |> snip7
-        end
 
         bench = Dict{Any, Any}(
             "name" => """`$(base_result_data["name"]) - $(base_result_data["engine"])`""",
