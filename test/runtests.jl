@@ -1,8 +1,13 @@
 using Pkg
 project_root = (@__DIR__) |> dirname
-Pkg.activate()
-Pkg.instantiate()
-Pkg.resovle()
+
+for _ in 1:2
+    try
+        Pkg.activate()
+        Pkg.resovle()
+    catch
+    end
+end
 
 # run(`git clone https://github.com/TuringLang/Turing.jl.git ../Turing.jl`)
 # try pkg"develop ../Turing.jl" catch end
