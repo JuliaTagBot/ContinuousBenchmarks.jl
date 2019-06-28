@@ -273,6 +273,9 @@ const tmpl_log_string = """
 |        |--*--> diff = {{{ anal_diff }}}
 {{/stan_diff}}
 {{/turing_items}}
+{{#turing_strings}}
+| {{.}}
+{{/turing_strings}}
 {{#note}}
 |-----------------------------------------------------------------------
 | Note:
@@ -294,26 +297,30 @@ function stringify_log(logd::Dict, monitor=[])
     if haskey(logd, "turing")
         data["turing"] = true
         data["turing_items"] = []
-        for (v, m) = logd["turing"]
-            (!isempty(monitor) && !(v in monitor)) && continue
-
-            item = Dict{Any, Any}("name" => v)
-            item["mean"] = round.(m, digits=3)
-            if haskey(logd, "analytic") && haskey(logd["analytic"], v)
-                item["analytic"] = round(logd["analytic"][v], digits=3)
-                diff = abs.(m - logd["analytic"][v])
-                if sum(diff) > 0.2
-                    item["anal_diff"] = round(diff, digits=3)
+        data["turing_strings"] = []
+        if isa(logd["turing"], String)
+            push!(data["turing_strings"], logd["turing"])
+        else
+            for (v, m) = logd["turing"]
+                (!isempty(monitor) && !(v in monitor)) && continue
+                item = Dict{Any, Any}("name" => v)
+                item["mean"] = round.(m, digits=3)
+                if haskey(logd, "analytic") && haskey(logd["analytic"], v)
+                    item["analytic"] = round(logd["analytic"][v], digits=3)
+                    diff = abs.(m - logd["analytic"][v])
+                    if sum(diff) > 0.2
+                        item["anal_diff"] = round(diff, digits=3)
+                    end
                 end
-            end
-            if haskey(logd, "stan") && haskey(logd["stan"], v)
-                item["stan"] = round.(logd["stan"][v], digits=3)
-                diff = abs.(m - logd["stan"][v])
-                if sum(diff) > 0.2
-                    item["stan_diff"] = round.(diff, digits=3)
+                if haskey(logd, "stan") && haskey(logd["stan"], v)
+                    item["stan"] = round.(logd["stan"][v], digits=3)
+                    diff = abs.(m - logd["stan"][v])
+                    if sum(diff) > 0.2
+                        item["stan_diff"] = round.(diff, digits=3)
+                    end
                 end
+                push!(data["turing_items"], item)
             end
-            push!(data["turing_items"], item)
         end
     end
 

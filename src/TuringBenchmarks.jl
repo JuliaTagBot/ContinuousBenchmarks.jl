@@ -155,12 +155,17 @@ end
 # Build logd from Turing chain
 function build_logd(name::String, engine::String, time, mem, tchain, _)
     mn(c, v) = mean(convert(Array, c[Symbol(v)][min(1001, 9*end÷10):end]))
+    turing_data = try
+        Dict(v => mn(tchain, v) for v in keys(tchain))
+    catch
+        string(tchain)
+    end
     Dict(
         "name" => name,
         "engine" => engine,
         "time" => time,
         "mem" => mem,
-        "turing" => Dict(v => mn(tchain, v) for v in keys(tchain))
+        "turing" => turing_data
     )
 end
 
