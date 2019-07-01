@@ -12,3 +12,5 @@ report_branch = "report"
 # Target repository: we will run benchmarks for this repo
 repo = "TuringLang/Turing.jl"
 use_remote_branches = true
+project_dir = "."
+benchmark_files = "benchmarks/benchmark_list.jl"

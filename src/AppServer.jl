@@ -10,7 +10,7 @@ using Logging
 using ..Config
 using ..Utils
 using ..Runner
-using ..TuringBenchmarks: PROJECT_PATH
+using ..TuringBenchmarks: PROJECT_PATH, set_project_path, set_benchmark_files
 
 const event_queue = Channel{Any}(1024)
 const httpsock = Ref{Sockets.TCPServer}()
@@ -187,6 +187,11 @@ function main()
     end
 
     global_logger(SimpleLogger(stdout, Config.log_level()))
+
+    project_dir = Config.get_config("target.project_dir")
+    benchmark_files = Config.get_config("target.benchmark_files")
+    set_project_path(project_dir)
+    set_benchmark_files(joinpath(project_dir, benchmark_files))
 
     @info("Starting server...")
     handler_task = @async request_processor()
