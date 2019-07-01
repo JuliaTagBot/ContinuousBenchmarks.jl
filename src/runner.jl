@@ -10,7 +10,7 @@ using ..Config
 
 using ..TuringBenchmarks: get_benchmark_files, PROJECT_PATH
 
-const app_repo = Config.get_config("github.app_repo")
+const report_repo = Config.get_config("github.report_repo")
 
 function trigger(push_event)
     commit = push_event.payload["head_commit"]
@@ -26,7 +26,7 @@ end
 function run_bm(name::String)
     bot_auth = GitHub.authenticate(Config.get_config("github.token"))
     params = Dict("ref" => name) # on the PR branch
-    bm_file_content = GitHub.file(app_repo, "jobs/$(name).toml"; params=params, auth=bot_auth)
+    bm_file_content = GitHub.file(report_repo, "jobs/$(name).toml"; params=params, auth=bot_auth)
     content = String(base64decode(replace(bm_file_content.content, "\n" =>"")))
     bm_info = Pkg.TOML.parse(content)
     report_path = nothing
@@ -61,7 +61,7 @@ function local_benchmark(name, branch_names)
 end
 
 function run_benchmarks(files; ignore_error=true, save_path="")
-    @info("Turing benchmarking started.")
+    @info("Benchmarking started.")
     for file in files
         try
             run_benchmark(file, save_path=save_path)
@@ -73,7 +73,7 @@ function run_benchmarks(files; ignore_error=true, save_path="")
             !ignore_error && rethrow(err)
         end
     end
-    @info("Turing benchmarking completed.")
+    @info("Benchmarking completed.")
 end
 
 function run_benchmark(bm_path; save_path="")

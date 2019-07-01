@@ -29,6 +29,11 @@ export
     stringify_log,
     generate_report
 
+
+const report_repo = Config.get_config("github.report_repo")
+const report_branch = Config.get_config("github.report_branch", "master")
+const bot_user = Config.get_config("github.user")
+
 # string utils
 
 snip(str, len) = str[1:min(len, end)]
@@ -67,7 +72,7 @@ end
 gitbranches(path, branches) = cd(() -> gitbranches(branches), path)
 
 function onbranch(f::Function, repopath, branch)
-    remote = Config.get_config("turing.use_remote_branches", true)
+    remote = Config.get_config("target.use_remote_branches", true)
     currentbranch = gitcurrentbranch(repopath)
     cd(repopath) do
         if remote
@@ -171,7 +176,7 @@ If it has no issues, please consider to merge or close this PullRequest.
 bm_commit_report_content(commit_id, report_url) = """
 The benchmark job for this commit is finished.
 
-The report is committed in this commit: TuringLang/TuringBenchmarks#$commit_id.
+The report is committed in this commit: $(report_repo)#$commit_id.
 
 You can see the report at $report_url.
 """

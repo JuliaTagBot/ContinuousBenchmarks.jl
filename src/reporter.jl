@@ -7,9 +7,12 @@ using Pkg
 using ..Config
 using ..Utils
 
-const app_repo = Config.get_config("github.app_repo")
+const report_repo = Config.get_config("github.report_repo")
+const report_branch = Config.get_config("github.report_branch", "master")
+const target_repo = Config.get_config("target.repo")
+
 if get(ENV, "TRAVIS", "false") == "true"
-    const bot_token = get(ENV, "TuringBenchBot_GITHUB_TOKEN", "none")
+    const bot_token = get(ENV, "BenchmarkBot_GITHUB_TOKEN", "none")
 else
     const bot_token = Config.get_config("github.token")
 end
@@ -25,20 +28,20 @@ function send(benchmark, bm_info, report_file)
                   "message" => "[skip ci] $(name) Report",
                   "content" => content)
 
-    commit = GitHub.create_file(app_repo, "jobs/$(name).report.md";
+    commit = GitHub.create_file(report_repo, "jobs/$(name).report.md";
                                 params=params, auth=bot_auth)
     commit_id = commit["commit"].sha
-    report_url = "https://github.com/$app_repo/blob/$name/" *
+    report_url = "https://github.com/$report_repo/blob/$name/" *
         "jobs/$(name).report.md"
 
     # 2. find the tracking PR, comment on it
-    all_prs = GitHub.pull_requests(app_repo; auth=bot_auth)
+    all_prs = GitHub.pull_requests(report_repo; auth=bot_auth)
     tracking_pr = nothing
     for item in  all_prs[1]
         if item.title == name
             tracking_pr = item
             params = Dict("body" => Utils.bm_pr_report_content(commit_id, report_url))
-            create_comment(app_repo, item.number, :pr; params=params, auth=bot_auth)
+            create_comment(report_repo, item.number, :pr; params=params, auth=bot_auth)
             break
         end
     end
@@ -48,14 +51,15 @@ function send(benchmark, bm_info, report_file)
     user = bm_info["trigger"]["user"]
     reg = r".*://github.com/([^/]+/[^/]+)/issues/(\d+)"
     m = match(reg, issue_url)
-    params = Dict("body" => Utils.bm_reply1_content(name, user, app_repo, commit_id, report_url))
+    params = Dict(
+        "body" => Utils.bm_reply1_content(name, user, report_repo, commit_id, report_url)
+    )
     create_comment(m[1], parse(Int, m[2]), :issue; params=params, auth=bot_auth)
 end
 
 function send_from_travis(benchmark, triggerer_cid, report_file)
     bot_auth = GitHub.authenticate(bot_token)
     name = benchmark
-    report_branch = "report" # TODO: commit report to which branch
 
     # 1. commit the report
     content = open(report_file) do io read(io, String) end
@@ -64,15 +68,16 @@ function send_from_travis(benchmark, triggerer_cid, report_file)
                   "message" => "[skip ci] $(name) Report",
                   "content" => content)
 
-    commit = GitHub.create_file(app_repo, "jobs/$(name).report.md";
+    commit = GitHub.create_file(report_repo, "jobs/$(name).report.md";
                                 params=params, auth=bot_auth)
     commit_id = commit["commit"].sha
-    report_url = "https://github.com/$app_repo/blob/$report_branch/" *
+    report_url = "https://github.com/$report_repo/blob/$report_branch/" *
         "jobs/$(name).report.md"
 
     # 2. find the trigger commit, comment on it
     params = Dict("body" => Utils.bm_commit_report_content(commit_id, report_url))
-    create_comment("TuringLang/Turing.jl", triggerer_cid, :commit; params=params, auth=bot_auth)
+    # TODO: the repo name should be configrable
+    create_comment(target_repo, triggerer_cid, :commit; params=params, auth=bot_auth)
 end
 
 
@@ -81,13 +86,13 @@ function send_error(benchmark, bm_info, exc)
     name = benchmark
 
     # 1. find the tracking PR, comment on it
-    all_prs = GitHub.pull_requests(app_repo; auth=bot_auth)
+    all_prs = GitHub.pull_requests(report_repo; auth=bot_auth)
     tracking_pr = nothing
     for item in  all_prs[1]
         if item.title == name
             tracking_pr = item
             params = Dict("body" => Utils.bm_pr_error_content(exc))
-            create_comment(app_repo, item.number, :pr; params=params, auth=bot_auth)
+            create_comment(report_repo, item.number, :pr; params=params, auth=bot_auth)
             break
         end
     end
@@ -97,7 +102,7 @@ function send_error(benchmark, bm_info, exc)
     user = bm_info["trigger"]["user"]
     reg = r".*://github.com/([^/]+/[^/]+)/issues/(\d+)"
     m = match(reg, issue_url)
-    params = Dict("body" => Utils.bm_reply2_content(name, user, app_repo, exc))
+    params = Dict("body" => Utils.bm_reply2_content(name, user, report_repo, exc))
     create_comment(m[1], parse(Int, m[2]), :issue; params=params, auth=bot_auth)
 end
 
