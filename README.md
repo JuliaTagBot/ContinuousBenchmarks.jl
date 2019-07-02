@@ -1,16 +1,31 @@
 # TuringBenchmarks
 
-This package has some benchmarking scripts for Turing. All models used
-here can be found in the `models` folder, all data can be found in the
-`data` folder, and all benchmarking scripts are in the `benchmarks`
-folder.
+Orignally, this package has some benchmarking scripts for Turing. Now,
+it evolves into a generic benchmarking library for Julia packages.
 
-Some data is generated via simulations found in the `simulations`
-folder. This data is generated when the package is built. When the
-package is built, `cmdstan` is also downloaded and setup where the URL
-can be accessed using `TuringBenchmarks.CMDSTAN_HOME`.
+It can run in two modes:
 
-## How to use the App:
+1. Running as a GitHub App
+2. Running on Travis-CI
+
+## Configuration
+
+TuringBenchmarks uses a `toml` file as its configuration file, there's
+a template at `config/app.toml.tmpl`.
+
+To run it, we need a GitHub Account, which will be used as the bot,
+and a repository for storing the benchmark report.
+
+If you want it to run as a GitHub App, a GitHub App should also be set
+up, an its information, like app id, pem, etc., should be put into the
+configuration file as well.
+
+If you only want to run it on Travis-CI, just fork this repository,
+and update the `config/app.travis.toml` file.
+
+## Run as a GitHub App
+
+Here how we run a GitHub App for Turing.jl:
 
 - Install the app to your
   repository:
@@ -28,7 +43,7 @@ can be accessed using `TuringBenchmarks.CMDSTAN_HOME`.
     branch (`br1` here) will be used as the base branch and the other
     branches will be compared to it.
 
-## The Bot and the App
+#### The Bot and the App
 
 - There are a TuringBenchBot GitHub Account
   (https://github.com/TuringBenchBot) and a TuringBenchBot GitHub App
@@ -48,53 +63,23 @@ can be accessed using `TuringBenchmarks.CMDSTAN_HOME`.
   the tracking PR. A reply will also be make at where you trigger the
   bot. You can merge or close the tracking PR at this point freely.
 
+## Run on Travis-CI
 
 ## How to benchmark Turing locally?
 
-To locally benchmark some Turing branches:
+To locally benchmark some branches of your repository:
 
-1. Make sure all the changes to the active Turing branch are committed
-   (or they will be lost!).
+1. Make sure all the changes to the active branch are committed (or
+   they will be lost!).
 2. To benchmark the `master` and `new_branch` branches, run:
 
 ```julia
+using TuringBenchmarks
 using TuringBenchmarks.Runner;
+TuringBenchmarks.set_project_path(".")
 report_path = Runner.local_benchmark("TEST", ("master", "new_branch"))
 ```
 
 3. Open the `report.md` report file at `report_path` to view
    benchmarking results. More details can be found in the subdirectory
    of each commit which are in the same path as the report.
-
-## How to contribute to TuringBenchmarks?
-
-There are a number of ways to contribute to `TuringBenchmarks`:
-1. Fix broken benchmarks.
-2. Fix and activate the Stan benchmarks, any file
-   in
-   [benchmarks directory](https://github.com/TuringLang/TuringBenchmarks/tree/master/benchmarks) with
-   `stan` in its name.
-3. Add new benchmarks.
-
-Both the broken and inactive benchmark file names can be
-found
-[here](https://github.com/TuringLang/TuringBenchmarks/blob/94eb4ba3740bf7b025a41947a37c5df93785a72c/src/TuringBenchmarks.jl#L20),
-while the actual files can be
-found
-[here](https://github.com/TuringLang/TuringBenchmarks/tree/master/benchmarks).
-
-## Guidelines for new benchmarks
-
-1. Every benchmark makes a `log` `Dict` object which as the following mandatory keys:
- - `"name"`,
- - `"engine"`, and
- - "turing", where `log["turing"]` must have the key `"elapsed"`.
-2. The `name`-`engine` combination must be unique for every benchmark.
-3. The `log` `Dict` must be sent using the `send_log` function to
-   activate the benchmark, otherwise results are not saved.
-4. Every benchmark file must be runnable in its own Julia session. Any
-   files which need to be executed first should be included in the
-   benchmark file.
-5. Since each benchmark is run in its own Julia session, any warm up
-   runs should be included in the benchmark file to avoid counting the
-   compilation time.

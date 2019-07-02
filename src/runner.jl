@@ -8,9 +8,9 @@ using ..Utils
 using ..Reporter
 using ..Config
 
-using ..TuringBenchmarks: BENCH_DIR, default_model_list, should_run_benchmark
+using ..TuringBenchmarks: get_benchmark_files, PROJECT_PATH
 
-const app_repo = Config.get_config("github.app_repo")
+const report_repo = Config.get_config("github.report_repo")
 
 function trigger(push_event)
     commit = push_event.payload["head_commit"]
@@ -26,7 +26,7 @@ end
 function run_bm(name::String)
     bot_auth = GitHub.authenticate(Config.get_config("github.token"))
     params = Dict("ref" => name) # on the PR branch
-    bm_file_content = GitHub.file(app_repo, "jobs/$(name).toml"; params=params, auth=bot_auth)
+    bm_file_content = GitHub.file(report_repo, "jobs/$(name).toml"; params=params, auth=bot_auth)
     content = String(base64decode(replace(bm_file_content.content, "\n" =>"")))
     bm_info = Pkg.TOML.parse(content)
     report_path = nothing
@@ -39,35 +39,29 @@ function run_bm(name::String)
     Reporter.send(name, bm_info, report_path)
 end
 
-function local_benchmark(name, branch_names, turing_path=turingpath())
+function local_benchmark(name, branch_names)
     @assert length(branch_names) > 1
     branch_names = [branch_names...]
-    gitbranches(turing_path, branch_names)
+    gitbranches(PROJECT_PATH[], branch_names)
     result_path = result_dir(name)
-    shas = gitbranchshas(turing_path, branch_names)
+    shas = gitbranchshas(PROJECT_PATH[], branch_names)
 
-    cd(result_path) do
-        for (branch, sha) in zip(branch_names, shas)
-            onbranch(turing_path, branch) do
-                isdir(snip7(sha)) || mkdir(snip7(sha))
-                for (root, dirs, files) in walkdir(BENCH_DIR)
-                    for file in files
-                        if should_run_benchmark(file)
-                            bm_file = abspath(joinpath(root, file))
-                            run_benchmarks([bm_file], save_path=snip7(sha))
-                        end
-                    end
-                end
+    for (branch, sha) in zip(branch_names, shas)
+        onbranch(PROJECT_PATH[], branch) do
+            save_path = joinpath(result_path, snip7(sha))
+            isdir(save_path) || mkdir(save_path)
+            for bm_file in get_benchmark_files()
+                run_benchmarks([bm_file], save_path=save_path)
             end
         end
-        Reporter.write_report!(name, "report.md", branch_names, shas)
     end
-
-    return joinpath(result_path, "report.md")
+    report_path = joinpath(result_path, "report.md")
+    Reporter.write_report!(name, report_path, branch_names, shas)
+    return report_path
 end
 
-function run_benchmarks(files=default_model_list; ignore_error=true, save_path="")
-    @info("Turing benchmarking started.")
+function run_benchmarks(files; ignore_error=true, save_path="")
+    @info("Benchmarking started.")
     for file in files
         try
             run_benchmark(file, save_path=save_path)
@@ -76,32 +70,31 @@ function run_benchmarks(files=default_model_list; ignore_error=true, save_path="
             if :msg in fieldnames(typeof(err))
                 @error(err.msg)
             end
-            !ignore_error && throw(err)
+            !ignore_error && rethrow(err)
         end
     end
-    @info("Turing benchmarking completed.")
+    @info("Benchmarking completed.")
 end
 
-function run_benchmark(fileormodel; save_path="")
-    bm_path = find_bm_file(fileormodel)
+function run_benchmark(bm_path; save_path="")
     @info("Benchmarking `$bm_path` ... ")
     data = Dict(
         :project_dir => dirname(@__DIR__),
-        :turing_path => turingpath(),
+        :project_path => PROJECT_PATH[],
         :bm_file => bm_path,
         :save_path => save_path,
     )
     julia_path = joinpath(Sys.BINDIR, Base.julia_exename())
     code = code_bm_run(data)
-    job = `$julia_path -e $code`
+    job = `$julia_path --project=$(PROJECT_PATH[]) -e $code`
     @info(job);
     run(job)
     @info("`$bm_path` ✓")
     return
 end
 
-function run_bm_on_travis(name, branch_names, cid, turing_path=turingpath())
-    report_path = local_benchmark(name, branch_names, turing_path)
+function run_bm_on_travis(name, branch_names, cid)
+    report_path = local_benchmark(name, branch_names)
     Reporter.send_from_travis(name, cid, report_path)
 end
 

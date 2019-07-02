@@ -4,7 +4,6 @@ using Dates
 using JSON
 using Mustache
 
-using ..TuringBenchmarks: BENCH_DIR
 using ..Config
 
 export
@@ -20,11 +19,8 @@ export
     gitbranchsha,
     gitbranchshas,
     # path
-    turingpath,
-    find_bm_file,
     result_filename,
     result_dir,
-    cmdstan_home,
     # bm
     benchmark_branches,
     bm_name,
@@ -32,6 +28,11 @@ export
     code_bm_run,
     stringify_log,
     generate_report
+
+
+const report_repo = Config.get_config("github.report_repo")
+const report_branch = Config.get_config("github.report_branch", "master")
+const bot_user = Config.get_config("github.user")
 
 # string utils
 
@@ -71,7 +72,7 @@ end
 gitbranches(path, branches) = cd(() -> gitbranches(branches), path)
 
 function onbranch(f::Function, repopath, branch)
-    remote = Config.get_config("turing.use_remote_branches", true)
+    remote = Config.get_config("target.use_remote_branches", true)
     currentbranch = gitcurrentbranch(repopath)
     cd(repopath) do
         if remote
@@ -99,32 +100,6 @@ gitbranchshas(path, branches) = gitbranchsha.((path,), branches)
 # path utils
 
 project_root = (@__DIR__) |> dirname
-local_cmdstan_home = abspath(joinpath(project_root, "cmdstan"))
-
-if !haskey(ENV, "CMDSTAN_HOME") || ENV["CMDSTAN_HOME"] == ""
-    if !isdir(local_cmdstan_home)
-        @warn "Please build package TuringBenchmarks to install CmdStan locally."
-    end
-    ENV["CMDSTAN_HOME"] = local_cmdstan_home
-end
-cmdstan_home() = ENV["CMDSTAN_HOME"]
-
-function turingpath()
-    path = Config.get_config("turing.path")
-    if path != nothing
-        return render(path, project_root=dirname(@__DIR__))
-    end
-    juliaexe_path = joinpath(Sys.BINDIR, Base.julia_exename())
-    turing_jl = readchomp(`$(juliaexe_path) -e "using Turing; println(pathof(Turing))"`)
-    turing_jl |> dirname |> dirname
-end
-
-function find_bm_file(name_or_path)
-    name_or_path = replace(name_or_path, "\\"=>"\\\\")
-    occursin("/", name_or_path) && return name_or_path
-    endswith(name_or_path, ".jl") && return name_or_path
-    joinpath(BENCH_DIR, "$(name_or_path).run.jl")
-end
 
 function result_filename(data)
     filename = join([data["name"], data["engine"]], "_")
@@ -201,7 +176,7 @@ If it has no issues, please consider to merge or close this PullRequest.
 bm_commit_report_content(commit_id, report_url) = """
 The benchmark job for this commit is finished.
 
-The report is committed in this commit: TuringLang/TuringBenchmarks#$commit_id.
+The report is committed in this commit: $(report_repo)#$commit_id.
 
 You can see the report at $report_url.
 """
@@ -237,26 +212,12 @@ Please consider to fix it and trigger another one.
 
 # code templates
 const tmpl_code_bm_run = """
-using Pkg;
-
-for _ in 1:2
-  try
-    Pkg.activate("{{{ :project_dir }}}");
-    Pkg.instantiate()
-    Pkg.develop(PackageSpec(path="{{{ :turing_path }}}"))
-  catch
-  end
-end
-
-using Turing, TuringBenchmarks;
-using CmdStan;
-CmdStan.set_cmdstan_home!(TuringBenchmarks.CMDSTAN_HOME);
+using TuringBenchmarks;
+using TuringBenchmarks.JSON;
 
 include("{{{ :bm_file }}}");
-
-using JSON;
-log_file = TuringBenchmarks.Utils.result_filename(logd) * ".json"
-cd(()->write(log_file, JSON.json(logd, 2)), "{{{ :save_path }}}")
+log_file = TuringBenchmarks.Utils.result_filename(LOG_DATA) * ".json"
+cd(()->write(log_file, JSON.json(LOG_DATA, 2)), "{{{ :save_path }}}")
 """
 code_bm_run(data) = render(tmpl_code_bm_run, data)
 
@@ -295,6 +256,9 @@ const tmpl_log_string = """
 |        |--*--> diff = {{{ anal_diff }}}
 {{/stan_diff}}
 {{/turing_items}}
+{{#turing_strings}}
+| {{.}}
+{{/turing_strings}}
 {{#note}}
 |-----------------------------------------------------------------------
 | Note:
@@ -316,26 +280,30 @@ function stringify_log(logd::Dict, monitor=[])
     if haskey(logd, "turing")
         data["turing"] = true
         data["turing_items"] = []
-        for (v, m) = logd["turing"]
-            (!isempty(monitor) && !(v in monitor)) && continue
-
-            item = Dict{Any, Any}("name" => v)
-            item["mean"] = round.(m, digits=3)
-            if haskey(logd, "analytic") && haskey(logd["analytic"], v)
-                item["analytic"] = round(logd["analytic"][v], digits=3)
-                diff = abs.(m - logd["analytic"][v])
-                if sum(diff) > 0.2
-                    item["anal_diff"] = round(diff, digits=3)
+        data["turing_strings"] = []
+        if isa(logd["turing"], String)
+            push!(data["turing_strings"], logd["turing"])
+        else
+            for (v, m) = logd["turing"]
+                (!isempty(monitor) && !(v in monitor)) && continue
+                item = Dict{Any, Any}("name" => v)
+                item["mean"] = round.(m, digits=3)
+                if haskey(logd, "analytic") && haskey(logd["analytic"], v)
+                    item["analytic"] = round(logd["analytic"][v], digits=3)
+                    diff = abs.(m - logd["analytic"][v])
+                    if sum(diff) > 0.2
+                        item["anal_diff"] = round(diff, digits=3)
+                    end
                 end
-            end
-            if haskey(logd, "stan") && haskey(logd["stan"], v)
-                item["stan"] = round.(logd["stan"][v], digits=3)
-                diff = abs.(m - logd["stan"][v])
-                if sum(diff) > 0.2
-                    item["stan_diff"] = round.(diff, digits=3)
+                if haskey(logd, "stan") && haskey(logd["stan"], v)
+                    item["stan"] = round.(logd["stan"][v], digits=3)
+                    diff = abs.(m - logd["stan"][v])
+                    if sum(diff) > 0.2
+                        item["stan_diff"] = round.(diff, digits=3)
+                    end
                 end
+                push!(data["turing_items"], item)
             end
-            push!(data["turing_items"], item)
         end
     end
 
@@ -351,8 +319,6 @@ const tmpl_report_md = """
 {{#branches}}
 - **{{{ name }}}**({{ sha }}) {{#is_base}}**[BASE_BRANCH]**{{/is_base}}
 {{/branches}}
-
-**TuringBenchmarks Commit**: {{ bench_commit }}
 
 ## Results Table:
 
@@ -418,9 +384,6 @@ function generate_report(bm_name, branches, shas, base_branch = "")
         base_result_json = read(open(base_result_file), String)
         base_result_data = JSON.parse(base_result_json)
         base_time = round(base_result_data["time"] * 1000, digits = 3)
-        if haskey(base_result_data, "bench_commit")
-            data["bench_commit"] = base_result_data["bench_commit"] |> snip7
-        end
 
         bench = Dict{Any, Any}(
             "name" => """`$(base_result_data["name"]) - $(base_result_data["engine"])`""",

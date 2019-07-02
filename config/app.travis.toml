@@ -1,3 +1,16 @@
 [github]
-# for main repr: where the bm_info lies and where to report
-app_repo = "TuringLang/TuringBenchmarks"
+# the information of the bot account
+user = "TuringBenchBot"
+email = "TuringBenchBot@email.com"
+token = "PRIVATE_INFO"
+
+# Benchmark reports will be committed to this repo
+report_repo = "TuringLang/TuringBenchmarks"
+report_branch = "report"
+
+[target]
+# Target repository: we will run benchmarks for this repo
+repo = "TuringLang/Turing.jl"
+use_remote_branches = true
+project_dir = "."
+benchmark_files = "benchmarks/benchmark_list.jl"

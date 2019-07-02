@@ -3,7 +3,6 @@ uuid = "ed6ffa36-4043-51a8-9a34-7a55e06872e4"
 
 [deps]
 Base64 = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
-CmdStan = "593b3428-ca2f-500c-ae53-031589ec8ddd"
 Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
 GitHub = "bc5e4493-9b4d-5f90-b8aa-2b2bcaad7a26"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
@@ -12,25 +11,11 @@ Logging = "56ddb016-857b-54e1-b83d-db4d58db5568"
 Mustache = "ffc61752-8dc7-55ee-8c37-f3e9cdd09e70"
 Pkg = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
 Sockets = "6462fe0b-24de-5631-8697-dd941f90decc"
-Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
-Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
 
 [extras]
-CmdStan = "593b3428-ca2f-500c-ae53-031589ec8ddd"
-DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
-FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
-ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
-Gadfly = "c91e804a-d5a3-530f-b6f0-dfbca275c004"
-JLD2 = "033835bb-8acc-5ee8-8aae-3f567f8a3819"
-Mamba = "5424a776-8be3-5c5b-a13f-3551f69ba0e6"
-Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 Profile = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
 ProfileView = "c46f51b8-102a-5cf2-8d2c-8597cb0e0da7"
-StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-StatsFuns = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-Turing = "fce5fe82-541a-59a6-adf8-730c64b5f9a0"
-UnicodePlots = "b8865327-cd53-5732-bb35-84acbb429228"
 
 [targets]
-test = ["CmdStan", "DelimitedFiles", "FileIO", "ForwardDiff", "Gadfly", "JLD2", "Mamba", "Plots", "Profile", "ProfileView", "StatsBase", "StatsFuns", "Test", "Turing", "UnicodePlots"]
+test = ["Profile", "ProfileView", "Test"]

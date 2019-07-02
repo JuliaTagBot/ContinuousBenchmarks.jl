@@ -10,11 +10,13 @@ using Logging
 using ..Config
 using ..Utils
 using ..Runner
+using ..TuringBenchmarks: PROJECT_PATH, set_project_path, set_benchmark_files
 
 const event_queue = Channel{Any}(1024)
 const httpsock = Ref{Sockets.TCPServer}()
 
-const app_repo = Config.get_config("github.app_repo")
+const report_repo = Config.get_config("github.report_repo")
+const report_branch = Config.get_config("github.report_branch", "master")
 const bot_user = Config.get_config("github.user")
 
 function bm_from_comment(data)
@@ -29,7 +31,7 @@ function bm_from_comment(data)
     issue_url = data.payload["issue"]["html_url"]
     issue_repo = data.repository
 
-    occursin("@TuringBenchBot", comment_body) || return
+    occursin("@$bot_user", comment_body) || return
     branches = benchmark_branches(comment_body)
     if isempty(branches)
         params = Dict("body" => "@$user Yes Sir?")
@@ -37,7 +39,7 @@ function bm_from_comment(data)
         return
     end
     try
-        gitbranches(turingpath(), branches)
+        gitbranches(PROJECT_PATH[], branches)
     catch ex # not all of the branches exist
         params = Dict("body" => "@$user $ex")
         create_comment(issue_repo, issue_no, :issue; params=params, auth=bot_auth)
@@ -47,23 +49,23 @@ function bm_from_comment(data)
     name = bm_name(branches)
 
     # create the branch
-    master = GitHub.reference(app_repo, "heads/master"; auth=bot_auth)
-    params = Dict("ref" => "refs/heads/" * name, "sha" => master.object["sha"])
-    GitHub.create_reference(app_repo; params=params, auth=bot_auth)
+    base_br = GitHub.reference(report_repo, "heads/$report_branch"; auth=bot_auth)
+    params = Dict("ref" => "refs/heads/" * name, "sha" => base_br.object["sha"])
+    GitHub.create_reference(report_repo; params=params, auth=bot_auth)
 
     # commit bm info file on the new branch
     content = base64encode(Utils.bm_file_content(user, issue_url, comment_url, branches))
     params = Dict("branch" => name,
                   "message" => name,
                   "content" => content)
-    commit = GitHub.create_file(app_repo, "jobs/$(name).toml"; params=params, auth=bot_auth)
+    commit = GitHub.create_file(report_repo, "jobs/$(name).toml"; params=params, auth=bot_auth)
 
     # create pull request
     params = Dict("title" => name,
                   "head" => name,
-                  "base" => "master",
+                  "base" => report_branch,
                   "body" => Utils.bm_pr_content(comment_url))
-    pr = GitHub.create_pull_request(app_repo; params=params, auth=bot_auth)
+    pr = GitHub.create_pull_request(report_repo; params=params, auth=bot_auth)
 
     params = Dict("body" => Utils.bm_reply0_content(user, pr.html_url.uri))
     create_comment(issue_repo, issue_no, :issue; params=params, auth=bot_auth)
@@ -132,7 +134,7 @@ function github_webhook(
 )
     app_auth = GitHub.JWTAuth(
         Config.get_config("github.app_id"), Config.get_config("github.priv_pem"))
-    # trigger = Regex("@TuringBenchBot")
+    # trigger = Regex("@$bot_user")
     # listener = GitHub.CommentListener(
     #    comment_handler,
     #    trigger;
@@ -185,6 +187,11 @@ function main()
     end
 
     global_logger(SimpleLogger(stdout, Config.log_level()))
+
+    project_dir = Config.get_config("target.project_dir")
+    benchmark_files = Config.get_config("target.benchmark_files")
+    set_project_path(project_dir)
+    set_benchmark_files(joinpath(project_dir, benchmark_files))
 
     @info("Starting server...")
     handler_task = @async request_processor()
