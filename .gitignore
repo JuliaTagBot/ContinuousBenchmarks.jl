@@ -1,9 +1,9 @@
+Manifest.toml
 cmdstan/
 deps/build.log
 data/stan-data/ldastandata*
 tmp/
-benchmark_results/*
-!benchmark_results/.gitkeep
+benchmark_results
 test/ldamodel.svg
 config/stop-server
 config/*.priv.toml
