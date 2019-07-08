@@ -10,7 +10,7 @@ using Logging
 using ..Config
 using ..Utils
 using ..Runner
-using ..TuringBenchmarks: PROJECT_PATH, set_project_path, set_benchmark_files
+using ..ContinuousBenchmarks: PROJECT_PATH, set_project_path, set_benchmark_files
 
 const event_queue = Channel{Any}(1024)
 const httpsock = Ref{Sockets.TCPServer}()
@@ -182,7 +182,7 @@ function main()
     if isempty(get(ENV, "ENV", "")) && isempty(get(ENV, "TBB_CONFIG", ""))
         println("Usage: \n\t" *
                 "export TBB_CONFIG=/path/to/config/file # or export ENV=dev|prod|...\n\t" *
-                "julia -e 'using TuringBenchmarks; TuringBenchmarks.AppServer.main()' ")
+                "julia -e 'using ContinuousBenchmarks; ContinuousBenchmarks.AppServer.main()' ")
         return
     end
 

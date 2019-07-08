@@ -1,8 +1,8 @@
-using Turing, TuringBenchmarks
+using Turing, ContinuousBenchmarks
 using Mamba: describe
 
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "school8-stan.data.jl"))
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "school8.model.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_DATA_DIR, "school8-stan.data.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_MODELS_DIR, "school8.model.jl"))
 
 data = deepcopy(schools8data[1])
 delete!(data, "tau")
@@ -17,7 +17,7 @@ logd = build_logd("School 8", bench_res...)
 
 # describe(chn)
 
-#include(joinpath(TuringBenchmarks.BENCH_DIR, "school8-stan.run.jl"))
+#include(joinpath(ContinuousBenchmarks.BENCH_DIR, "school8-stan.run.jl"))
 
 #logd["stan"] = stan_d
 #logd["time_stan"] = get_stan_time("schools8")

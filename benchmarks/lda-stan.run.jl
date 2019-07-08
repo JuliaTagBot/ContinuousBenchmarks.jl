@@ -1,8 +1,8 @@
-using CmdStan, Turing, TuringBenchmarks
+using CmdStan, Turing, ContinuousBenchmarks
 using Mamba
 
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "lda-stan.data.jl"))
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "lda-stan.model.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_DATA_DIR, "lda-stan.data.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_MODELS_DIR, "lda-stan.model.jl"))
 
 stan_model_name = "LDA"
 # ldastan = Stanmodel(Sample(save_warmup=true), name=stan_model_name, model=ldastanmodel, nchains=1);
@@ -12,7 +12,7 @@ ldastan = Stanmodel(Sample(algorithm=CmdStan.Hmc(CmdStan.Static(0.05),CmdStan.di
   num_samples=3000, num_warmup=0, thin=1,
   name=stan_model_name, model=ldastanmodel, nchains=1);
 
-rc, lda_stan_sim = stan(ldastan, ldastandata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false);
+rc, lda_stan_sim = stan(ldastan, ldastandata, CmdStanDir=ContinuousBenchmarks.CMDSTAN_HOME, summary=false);
 # lda_stan_sim.names
 V = ldastandata[1]["V"]
 K = ldastandata[1]["K"]

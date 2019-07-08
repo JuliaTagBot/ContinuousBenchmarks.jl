@@ -1,4 +1,4 @@
-module TuringBenchmarks
+module ContinuousBenchmarks
 
 __precompile__(false)
 

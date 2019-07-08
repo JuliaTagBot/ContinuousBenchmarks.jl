@@ -1,4 +1,4 @@
-using Turing, TuringBenchmarks
+using Turing, ContinuousBenchmarks
 
 data = [0, 1, 0, 1, 1, 1, 1, 1, 1, 1]
 

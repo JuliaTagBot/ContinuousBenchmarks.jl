@@ -1,4 +1,4 @@
-using CmdStan, Turing, TuringBenchmarks
+using CmdStan, Turing, ContinuousBenchmarks
 
 using Mamba: describe
 
@@ -37,7 +37,7 @@ const binomialdata = [
   Dict("n" => 10, "k" => 5)
 ]
 
-#rc, sim = stan(stanmodel, binomialdata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
+#rc, sim = stan(stanmodel, binomialdata, CmdStanDir=ContinuousBenchmarks.CMDSTAN_HOME, summary=false)
 
 #describe(sim)
 

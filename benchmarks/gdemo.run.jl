@@ -1,8 +1,8 @@
-using Turing, TuringBenchmarks
+using Turing, ContinuousBenchmarks
 
 
-include(joinpath(TuringBenchmarks.DATA_DIR, "toy-data", "gauss.data.jl"))
-include(joinpath(TuringBenchmarks.MODELS_DIR, "toy-models", "gauss.model.jl"))
+include(joinpath(ContinuousBenchmarks.DATA_DIR, "toy-data", "gauss.data.jl"))
+include(joinpath(ContinuousBenchmarks.MODELS_DIR, "toy-models", "gauss.model.jl"))
 
 @tbenchmark(PG(20, 2000), gaussmodel, gaussdata)
 #bench_res = @tbenchmark(PG(20, 2000), gaussmodel, gaussdata)

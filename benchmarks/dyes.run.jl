@@ -1,4 +1,4 @@
-using CmdStan, Turing, TuringBenchmarks
+using CmdStan, Turing, ContinuousBenchmarks
 using Mamba: describe
 
 const dyes ="
@@ -57,10 +57,10 @@ const dyesdata = [
 #  save_warmup=true, adapt=CmdStan.Adapt(engaged=false)),
 #  num_samples=2000, num_warmup=0, thin=1,
 #  name="dyes", model=dyes, nchains=1);
-#rc, sim = stan(stanmodel, dyesdata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
+#rc, sim = stan(stanmodel, dyesdata, CmdStanDir=ContinuousBenchmarks.CMDSTAN_HOME, summary=false)
 
 #stanmodel = Stanmodel(name="dyes", model=dyes, useMamba=false)
-#rc, sim = stan(stanmodel, dyesdata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME)
+#rc, sim = stan(stanmodel, dyesdata, CmdStanDir=ContinuousBenchmarks.CMDSTAN_HOME)
 
 @model dyes_turing(BATCHES, SAMPLES, y) = begin
   theta ~ Normal(0.0, 1E5)

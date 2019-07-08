@@ -1,6 +1,6 @@
 # NOTE: Stan codes are copied from https://github.com/goedman/Stan.jl/blob/master/Examples/NoMamba/ARM/Ch03/Kid/kidscore.jl
 
-using CmdStan, Turing, TuringBenchmarks
+using CmdStan, Turing, ContinuousBenchmarks
 using Mamba: describe
 
 const kid = "
@@ -182,7 +182,7 @@ const kiddata = [
 #  save_warmup=true, adapt=CmdStan.Adapt(engaged=false)),
 #  num_samples=2000, num_warmup=0, thin=1,
 #  name="kid", model=kid, nchains=1);
-#rc, sim = stan(stanmodel, kiddata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
+#rc, sim = stan(stanmodel, kiddata, CmdStanDir=ContinuousBenchmarks.CMDSTAN_HOME, summary=false)
 
 # if rc == 0
 #   println("Test: 25.0 < round(mean(beta[1]), 0) == $(mean(sim[:,8,:])) < 27.0 ?")

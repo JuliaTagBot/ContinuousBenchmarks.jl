@@ -1,8 +1,8 @@
-using Turing, TuringBenchmarks
+using Turing, ContinuousBenchmarks
 
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "MoC-stan.data.jl"))
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "MoC.model.jl"))
-#include(joinpath(TuringBenchmarks.BENCH_DIR, "MoC-stan.run.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_DATA_DIR, "MoC-stan.data.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_MODELS_DIR, "MoC.model.jl"))
+#include(joinpath(ContinuousBenchmarks.BENCH_DIR, "MoC-stan.run.jl"))
 
 setadbackend(:reverse_diff)
 

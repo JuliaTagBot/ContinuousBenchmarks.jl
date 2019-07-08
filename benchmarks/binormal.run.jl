@@ -1,9 +1,9 @@
 # https://github.com/goedman/Stan.jl/blob/master/Examples/Mamba/Binormal/binormal.jl
 
-using CmdStan, Turing, TuringBenchmarks
+using CmdStan, Turing, ContinuousBenchmarks
 
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "binormal-stan.model.jl"))
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "binormal.model.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_MODELS_DIR, "binormal-stan.model.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_MODELS_DIR, "binormal.model.jl"))
 
 @tbenchmark(HMC(20, 0.5, 5), binormal, ())
 bench_res = @tbenchmark(HMC(2000, 0.5, 5), binormal, ())
@@ -23,7 +23,7 @@ logd = Dict(
 
 logd = build_logd("Binormal: sampling from the prior", bench_res...)
 
-#include(joinpath(TuringBenchmarks.BENCH_DIR, "binormal-stan.run.jl"))
+#include(joinpath(ContinuousBenchmarks.BENCH_DIR, "binormal-stan.run.jl"))
 
 # logd["stan"] = Dict("s" => mean(s_stan), "m" => mean(m_stan))
 #logd["time_stan"] = get_stan_time("binormal")

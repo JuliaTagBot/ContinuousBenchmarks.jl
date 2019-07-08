@@ -1,13 +1,13 @@
-using CmdStan, Turing, TuringBenchmarks
+using CmdStan, Turing, ContinuousBenchmarks
 
 
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "normal-mixture-stan.data.jl"))
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "normal-mixture-stan.model.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_DATA_DIR, "normal-mixture-stan.data.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_MODELS_DIR, "normal-mixture-stan.model.jl"))
 
 stan_model_name = "normalmixture"
 simplenormalmixturestan = Stanmodel(name=stan_model_name, model=simplenormalmixturemodel, nchains=1);
 
-rc, nm_stan_sim = stan(simplenormalmixturestan, [Dict("N"=>100, "y"=>simplenormalmixturestandata[1]["y"][1:100])], CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
+rc, nm_stan_sim = stan(simplenormalmixturestan, [Dict("N"=>100, "y"=>simplenormalmixturestandata[1]["y"][1:100])], CmdStanDir=ContinuousBenchmarks.CMDSTAN_HOME, summary=false)
 # describe(nm_stan_sim)
 
 nm_theta = nm_stan_sim[1:1000, ["theta"], :].value[:]

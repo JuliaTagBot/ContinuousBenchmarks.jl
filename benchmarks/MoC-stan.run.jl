@@ -1,7 +1,7 @@
-using CmdStan, Turing, TuringBenchmarks
+using CmdStan, Turing, ContinuousBenchmarks
 
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "MoC-stan.data.jl"))
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "MoC-stan.model.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_DATA_DIR, "MoC-stan.data.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_MODELS_DIR, "MoC-stan.model.jl"))
 
 stan_model_name = "Naive_Bayes"
 nbstan = Stanmodel(Sample(algorithm=CmdStan.Hmc(CmdStan.Static(0.05),CmdStan.diag_e(),0.01,0.0),
@@ -9,7 +9,7 @@ nbstan = Stanmodel(Sample(algorithm=CmdStan.Hmc(CmdStan.Static(0.05),CmdStan.dia
   num_samples=5000, num_warmup=0, thin=1,
 name=stan_model_name, model=naivebayesstanmodel, nchains=1);
 
-rc, nb_stan_sim = stan(nbstan, nbstandata, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false);
+rc, nb_stan_sim = stan(nbstan, nbstandata, CmdStanDir=ContinuousBenchmarks.CMDSTAN_HOME, summary=false);
 # nb_stan_sim.names
 
 stan_d_raw = Dict()

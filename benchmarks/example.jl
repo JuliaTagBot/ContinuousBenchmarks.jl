@@ -1,4 +1,4 @@
-using TuringBenchmarks
+using ContinuousBenchmarks
 
 s = Ref(0)
 

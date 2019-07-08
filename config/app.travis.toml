@@ -5,7 +5,7 @@ email = "TuringBenchBot@email.com"
 token = "PRIVATE_INFO"
 
 # Benchmark reports will be committed to this repo
-report_repo = "TuringLang/TuringBenchmarks"
+report_repo = "TuringLang/ContinuousBenchmarks.jl"
 report_branch = "report"
 
 [target]

@@ -243,14 +243,14 @@ Please consider to fix it and trigger another one.
 
 # code templates
 const tmpl_code_bm_run = """
-using TuringBenchmarks;
-using TuringBenchmarks.Reporter;
-using TuringBenchmarks.JSON;
+using ContinuousBenchmarks;
+using ContinuousBenchmarks.Reporter;
+using ContinuousBenchmarks.JSON;
 
 include("{{{ :bm_file }}}");
-result_file = TuringBenchmarks.Utils.result_filename(LOG_DATA) * ".json"
+result_file = ContinuousBenchmarks.Utils.result_filename(LOG_DATA) * ".json"
 cd(() -> write(result_file, JSON.json(LOG_DATA, 2)), "{{{ :save_path }}}")
-log_file = TuringBenchmarks.Utils.result_filename(LOG_DATA) * ".log"
+log_file = ContinuousBenchmarks.Utils.result_filename(LOG_DATA) * ".log"
 Reporter.log_save(log_file, "{{{ :save_path }}}")
 """
 code_bm_run(data) = render(tmpl_code_bm_run, data)
@@ -358,7 +358,7 @@ const tmpl_report_md = """
 
 Below is a table of this job's results, obtained by running the
 benchmarks found in
-[TuringLang/TuringBenchmarks](https://github.com/TuringLang/TuringBenchmarks). The
+[TuringLang/ContinuousBenchmarks](https://github.com/TuringLang/ContinuousBenchmarks). The
 table shows the time ratio of the N (N >= 2) Turing commits
 benchmarked. A ratio greater than `1.0` denotes a possible regression
 (marked with :-1:), while a ratio less than `1.0` denotes a possible
