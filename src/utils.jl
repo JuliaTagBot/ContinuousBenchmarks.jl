@@ -172,11 +172,11 @@ You can see the report at {{{ :report_url }}}.
 
 And below is the log reported from the benchmark:
 
+```
 {{#:report_logs}}
-
 {{.}}
-
 {{/:report_logs}}
+```
 
 If it has no issues, please consider to merge or close this PullRequest.
 """
@@ -197,11 +197,11 @@ You can see the report at {{{ :report_url }}}.
 
 Below is the log reported from the benchmark:
 
+```
 {{#:report_logs}}
-
 {{.}}
-
 {{/:report_logs}}
+```
 """
 function bm_commit_report_content(bm_name, commit_id, report_url)
     report_logs = get_benchmark_log(bm_name)
@@ -457,7 +457,6 @@ function get_benchmark_log(bm_name)
         log_files = filter(dir |> readdir) do fname endswith(fname, ".log") end
         for fname in log_files
             log_file = joinpath(dir, fname)
-            push!(logs, "===[ $(fname[1:end-4]) ]===")
             push!(logs, readlines(open(log_file))...)
         end
     end

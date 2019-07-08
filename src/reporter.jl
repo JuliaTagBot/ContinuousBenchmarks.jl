@@ -29,8 +29,8 @@ function _log_report()
     end
     log_report = (log::String...) -> begin
         isempty(log) && return logs
-        branch = gitcurrentbranch(project_dir)
-        log = map(log) do x "[$branch] " * x end
+        commit_id = snip7(githeadsha(project_dir))
+        log = map(log) do x "[$commit_id] " * x end
         push!(logs, log...)
     end
     log_save = (file, save_path) -> begin
