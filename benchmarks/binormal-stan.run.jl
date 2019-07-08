@@ -1,8 +1,8 @@
-using CmdStan, Turing, TuringBenchmarks
+using CmdStan, Turing, ContinuousBenchmarks
 
 #using Mamba: describe
 
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "binormal-stan.model.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_MODELS_DIR, "binormal-stan.model.jl"))
 
 global stanmodel, rc, sim1, sim, stan_time
 # stanmodel = Stanmodel(name="binormal", model=binorm, Sample(save_warmup=true));
@@ -11,7 +11,7 @@ stanmodel = Stanmodel(Sample(algorithm=CmdStan.Hmc(CmdStan.Static(0.5*5),CmdStan
   num_samples=2000, num_warmup=0, thin=1,
   name="binormal", model=binorm, nchains=1);
 
-rc, sim1 = stan(stanmodel, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
+rc, sim1 = stan(stanmodel, CmdStanDir=ContinuousBenchmarks.CMDSTAN_HOME, summary=false)
 
 if rc == 0
   ## Subset Sampler Output

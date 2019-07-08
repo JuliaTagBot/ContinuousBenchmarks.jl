@@ -1,4 +1,4 @@
-name = "TuringBenchmarks"
+name = "ContinuousBenchmarks"
 uuid = "ed6ffa36-4043-51a8-9a34-7a55e06872e4"
 
 [deps]

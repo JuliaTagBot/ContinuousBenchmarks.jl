@@ -1,9 +1,9 @@
-using Turing, TuringBenchmarks
+using Turing, ContinuousBenchmarks
 
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "lda-stan.data.jl"))
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "lda-stan.model.jl"))
-#include(joinpath(TuringBenchmarks.BENCH_DIR, "lda-stan.run.jl"))
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "lda.model.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_DATA_DIR, "lda-stan.data.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_MODELS_DIR, "lda-stan.model.jl"))
+#include(joinpath(ContinuousBenchmarks.BENCH_DIR, "lda-stan.run.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_MODELS_DIR, "lda.model.jl"))
 
 # setchunksize(100)
 setadbackend(:reverse_diff)

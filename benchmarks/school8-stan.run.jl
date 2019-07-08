@@ -1,9 +1,9 @@
-using CmdStan, Turing, TuringBenchmarks
+using CmdStan, Turing, ContinuousBenchmarks
 
 # Model taken from https://github.com/goedman/Stan.jl/blob/master/Examples/Mamba/EightSchools/schools8.jl
 
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "school8-stan.data.jl"))
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "school8-stan.model.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_DATA_DIR, "school8-stan.data.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_MODELS_DIR, "school8-stan.model.jl"))
 
 global stanmodel, rc, sim
 # stanmodel = Stanmodel(name="schools8", model=eightschools);
@@ -12,7 +12,7 @@ stanmodel = Stanmodel(Sample(algorithm=CmdStan.Hmc(CmdStan.Static(0.75*5),CmdSta
   num_samples=2000, num_warmup=0, thin=1,
   name="schools8", model=eightschools, nchains=1);
 
-rc, sim = stan(stanmodel, schools8data, CmdStanDir=TuringBenchmarks.CMDSTAN_HOME, summary=false)
+rc, sim = stan(stanmodel, schools8data, CmdStanDir=ContinuousBenchmarks.CMDSTAN_HOME, summary=false)
 
 stan_d = Dict()
 

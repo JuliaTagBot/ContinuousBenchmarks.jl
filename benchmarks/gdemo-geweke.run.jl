@@ -1,4 +1,4 @@
-using StatsBase, Turing, TuringBenchmarks
+using StatsBase, Turing, ContinuousBenchmarks
 using Gadfly
 using Mamba: describe
 

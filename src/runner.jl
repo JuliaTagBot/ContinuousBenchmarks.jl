@@ -8,7 +8,7 @@ using ..Utils
 using ..Reporter
 using ..Config
 
-using ..TuringBenchmarks: get_benchmark_files, PROJECT_PATH
+using ..ContinuousBenchmarks: get_benchmark_files, PROJECT_PATH
 
 const report_repo = Config.get_config("github.report_repo")
 

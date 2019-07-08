@@ -1,12 +1,12 @@
 # Model and data files don't exist
 
-using Turing, TuringBenchmarks
+using Turing, ContinuousBenchmarks
 using Mamba: describe
 using FileIO, JLD2
 
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "sv.model.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_MODELS_DIR, "sv.model.jl"))
 
-sv_data = load(joinpath(TuringBenchmarks.DATA_DIR, "/nips-2017/sv-data.jld2"))["data"]
+sv_data = load(joinpath(ContinuousBenchmarks.DATA_DIR, "/nips-2017/sv-data.jld2"))["data"]
 
 # setadbackend(:forward_diff)
 # setchunksize(1000)

@@ -1,4 +1,4 @@
-using Turing, TuringBenchmarks
+using Turing, ContinuousBenchmarks
 using Turing: VarName, @VarName
 using ForwardDiff: Dual
 
@@ -85,8 +85,8 @@ run_total = 5
 
 optRes *= "LDA (normal): "
 
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "lda-stan.data.jl"))
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "lda.model.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_DATA_DIR, "lda-stan.data.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_MODELS_DIR, "lda.model.jl"))
 
 data = map(ind -> ldastandata[1][ind], ["K", "V", "M", "N", "w", "doc", "beta", "alpha"])
 ts = Float64[]
@@ -103,8 +103,8 @@ optRes *= "$ts, mean=$(mean(ts)), var=$(var(ts))\n"
 
 optRes *= "MoC (normal): "
 
-include(joinpath(TuringBenchmarks.STAN_DATA_DIR, "MoC-stan.data.jl"))
-include(joinpath(TuringBenchmarks.STAN_MODELS_DIR, "MoC.model.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_DATA_DIR, "MoC-stan.data.jl"))
+include(joinpath(ContinuousBenchmarks.STAN_MODELS_DIR, "MoC.model.jl"))
 
 ts2 = Float64[]
 

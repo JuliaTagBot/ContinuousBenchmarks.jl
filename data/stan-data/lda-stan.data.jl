@@ -1,4 +1,4 @@
-using TuringBenchmarks, FileIO, JLD2
+using ContinuousBenchmarks, FileIO, JLD2
 
 # const ldastandata = [
 # Dict(
@@ -47,9 +47,9 @@ using TuringBenchmarks, FileIO, JLD2
 # )
 # ]
 
-const ldastandata = load(joinpath(TuringBenchmarks.STAN_DATA_DIR, "ldastandata.jld2"))["data"]
-# const ldastandata = load(joinpath(TuringBenchmarks.STAN_DATA_DIR, "ldastandataV20K2M25L100.data"))["data"]
-# const ldastandata = load(joinpath(TuringBenchmarks.STAN_DATA_DIR, "ldastandataV100K5M10L1000.data"))["data"]
+const ldastandata = load(joinpath(ContinuousBenchmarks.STAN_DATA_DIR, "ldastandata.jld2"))["data"]
+# const ldastandata = load(joinpath(ContinuousBenchmarks.STAN_DATA_DIR, "ldastandataV20K2M25L100.data"))["data"]
+# const ldastandata = load(joinpath(ContinuousBenchmarks.STAN_DATA_DIR, "ldastandataV100K5M10L1000.data"))["data"]
 
 # using PyCall
 # @pyimport pickle

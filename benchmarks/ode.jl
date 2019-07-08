@@ -1,7 +1,7 @@
-using Turing, TuringBenchmarks, DelimitedFiles
+using Turing, ContinuousBenchmarks, DelimitedFiles
 
 
-odeDataRaw = readdlm(joinpath(TuringBenchmarks.DATA_DIR, "toy-data", "ode.csv"), ',')
+odeDataRaw = readdlm(joinpath(ContinuousBenchmarks.DATA_DIR, "toy-data", "ode.csv"), ',')
 
 t = Vector{Float64}(odeDataRaw[2:end, 1])
 x0 = Vector{Float64}(odeDataRaw[2:end, 2])

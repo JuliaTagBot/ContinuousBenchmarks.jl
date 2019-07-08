@@ -1,6 +1,6 @@
 module LDA_SIM
 
-using FileIO, JLD2, Turing, TuringBenchmarks
+using FileIO, JLD2, Turing, ContinuousBenchmarks
 
 # V <- 5; # words: river, stream, bank, money, loan
 # K <- 2; # topics: RIVER, BANK
@@ -74,6 +74,6 @@ ldastandata = [
 
 # println(ldastandata)
 
-save(joinpath(TuringBenchmarks.STAN_DATA_DIR, "ldastandata.jld2"), "data", ldastandata)
+save(joinpath(ContinuousBenchmarks.STAN_DATA_DIR, "ldastandata.jld2"), "data", ldastandata)
 
 end

@@ -1,7 +1,7 @@
 using Pkg
 
-using TuringBenchmarks
-using TuringBenchmarks.Runner
+using ContinuousBenchmarks
+using ContinuousBenchmarks.Runner
 
 project_root = (@__DIR__) |> dirname
 set_project_path(project_root)

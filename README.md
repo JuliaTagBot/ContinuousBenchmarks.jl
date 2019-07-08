@@ -1,4 +1,4 @@
-# TuringBenchmarks
+# ContinuousBenchmarks
 
 Orignally, this package has some benchmarking scripts for Turing. Now,
 it evolves into a generic benchmarking library for Julia packages.
@@ -10,7 +10,7 @@ It can run in two modes:
 
 ## Configuration
 
-TuringBenchmarks uses a `toml` file as its configuration file, there's
+ContinuousBenchmarks uses a `toml` file as its configuration file, there's
 a template at `config/app.toml.tmpl`.
 
 To run it, we need a GitHub Account, which will be used as the bot,
@@ -53,7 +53,7 @@ Here how we run a GitHub App for Turing.jl:
   "branch1")`, the app will receive the instruction;
 - After receiving the benchmark instruction,
   - The app will create a new pull request in this repository
-    (TuringBenchmarks) with information of the benchmark request to
+    (ContinuousBenchmarks) with information of the benchmark request to
     track the job. Then a benchmark job on the App server or on Travis
     CI will be triggered;
   - A comment reply to the issue where you `@` the bot will also be
@@ -74,9 +74,9 @@ To locally benchmark some branches of your repository:
 2. To benchmark the `master` and `new_branch` branches, run:
 
 ```julia
-using TuringBenchmarks
-using TuringBenchmarks.Runner;
-TuringBenchmarks.set_project_path(".")
+using ContinuousBenchmarks
+using ContinuousBenchmarks.Runner;
+ContinuousBenchmarks.set_project_path(".")
 report_path = Runner.local_benchmark("TEST", ("master", "new_branch"))
 ```
 
