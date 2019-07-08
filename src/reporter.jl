@@ -7,6 +7,8 @@ using Pkg
 using ..Config
 using ..Utils
 
+export log_report
+
 const report_repo = Config.get_config("github.report_repo")
 const report_branch = Config.get_config("github.report_branch", "master")
 const target_repo = Config.get_config("target.repo")
@@ -16,6 +18,28 @@ if get(ENV, "TRAVIS", "false") == "true"
 else
     const bot_token = Config.get_config("github.token")
 end
+
+
+function _log_report()
+    logs = Vector{String}()
+    project_dir = if Base.JLOptions().project == C_NULL
+        pwd()
+    else
+        unsafe_string(Base.JLOptions().project)
+    end
+    log_report = (log::String...) -> begin
+        isempty(log) && return logs
+        branch = gitcurrentbranch(project_dir)
+        log = map(log) do x "[$branch] " * x end
+        push!(logs, log...)
+    end
+    log_save = (file, save_path) -> begin
+        log_text = join(logs, "\n")
+        cd(() -> write(file, log_text), save_path)
+    end
+    return (log_report, log_save)
+end
+log_report, log_save = _log_report()
 
 function send(benchmark, bm_info, report_file)
     bot_auth = GitHub.authenticate(bot_token)
@@ -40,7 +64,9 @@ function send(benchmark, bm_info, report_file)
     for item in  all_prs[1]
         if item.title == name
             tracking_pr = item
-            params = Dict("body" => Utils.bm_pr_report_content(commit_id, report_url))
+            params = Dict(
+                "body" => Utils.bm_pr_report_content(name, commit_id, report_url)
+            )
             create_comment(report_repo, item.number, :pr; params=params, auth=bot_auth)
             break
         end
@@ -75,8 +101,9 @@ function send_from_travis(benchmark, triggerer_cid, report_file)
         "jobs/$(name).report.md"
 
     # 2. find the trigger commit, comment on it
-    params = Dict("body" => Utils.bm_commit_report_content(commit_id, report_url))
-    # TODO: the repo name should be configrable
+    params = Dict(
+        "body" => Utils.bm_commit_report_content(name, commit_id, report_url)
+    )
     create_comment(target_repo, triggerer_cid, :commit; params=params, auth=bot_auth)
 end
 

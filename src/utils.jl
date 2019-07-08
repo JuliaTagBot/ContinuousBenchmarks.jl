@@ -163,23 +163,54 @@ Hi @$user, a new benchmark job will be dispatched soon at your command,
 you can track it here: $(pr_url).
 """
 
-bm_pr_report_content(commit_id, report_url) = """
+const tmpl_bm_pr_report_content = """
 The benchmark job is finished.
 
-The report is committed in this commit: $commit_id.
+The report is committed in this commit: {{{ :commit_id }}}.
 
-You can see the report at $report_url.
+You can see the report at {{{ :report_url }}}.
+
+And below is the log reported from the benchmark:
+
+{{#:report_logs}}
+
+{{.}}
+
+{{/:report_logs}}
 
 If it has no issues, please consider to merge or close this PullRequest.
 """
+function bm_pr_report_content(bm_name, commit_id, report_url)
+    report_logs = get_benchmark_log(bm_name)
+    render(tmpl_bm_pr_report_content,
+           Dict(:commit_id => commit_id,
+                :report_url => report_url,
+                :report_logs => report_logs))
+end
 
-bm_commit_report_content(commit_id, report_url) = """
+const tmpl_bm_commit_report_content = """
 The benchmark job for this commit is finished.
 
-The report is committed in this commit: $(report_repo)#$commit_id.
+The report is committed in this commit: {{{ :report_repo }}}#{{{ :commit_id }}}.
 
-You can see the report at $report_url.
+You can see the report at {{{ :report_url }}}.
+
+Below is the log reported from the benchmark:
+
+{{#:report_logs}}
+
+{{.}}
+
+{{/:report_logs}}
 """
+function bm_commit_report_content(bm_name, commit_id, report_url)
+    report_logs = get_benchmark_log(bm_name)
+    render(tmpl_bm_commit_report_content,
+           Dict(:report_repo => report_repo,
+                :commit_id => commit_id,
+                :report_url => report_url,
+                :report_logs => report_logs))
+end
 
 bm_pr_error_content(exc) = """
 An error occurred while running the benchmark:
@@ -213,11 +244,14 @@ Please consider to fix it and trigger another one.
 # code templates
 const tmpl_code_bm_run = """
 using TuringBenchmarks;
+using TuringBenchmarks.Reporter;
 using TuringBenchmarks.JSON;
 
 include("{{{ :bm_file }}}");
-log_file = TuringBenchmarks.Utils.result_filename(LOG_DATA) * ".json"
-cd(()->write(log_file, JSON.json(LOG_DATA, 2)), "{{{ :save_path }}}")
+result_file = TuringBenchmarks.Utils.result_filename(LOG_DATA) * ".json"
+cd(() -> write(result_file, JSON.json(LOG_DATA, 2)), "{{{ :save_path }}}")
+log_file = TuringBenchmarks.Utils.result_filename(LOG_DATA) * ".log"
+Reporter.log_save(log_file, "{{{ :save_path }}}")
 """
 code_bm_run(data) = render(tmpl_code_bm_run, data)
 
@@ -373,6 +407,7 @@ function generate_report(bm_name, branches, shas, base_branch = "")
     end
 
     result_files = readdir(joinpath(result_path, snip7(shas[1])))
+    result_files = filter(result_files) do fname endswith(fname, ".json") end
     result_files = filter(result_files) do fname
         all(isfile, map((sha) -> joinpath(result_path, snip7(sha), fname), shas))
     end
@@ -410,6 +445,23 @@ function generate_report(bm_name, branches, shas, base_branch = "")
     end
 
     render(tmpl_report_md, data)
+end
+
+
+function get_benchmark_log(bm_name)
+    result_path = result_dir(bm_name)
+    result_dirs = map(result_path |> readdir) do x joinpath(result_path, x) end
+    result_dirs = filter(result_dirs) do x isdir(x) end
+    logs = Vector{String}()
+    for dir in result_dirs
+        log_files = filter(dir |> readdir) do fname endswith(fname, ".log") end
+        for fname in log_files
+            log_file = joinpath(dir, fname)
+            push!(logs, "===[ $(fname[1:end-4]) ]===")
+            push!(logs, readlines(open(log_file))...)
+        end
+    end
+    return logs
 end
 
 # legacy
