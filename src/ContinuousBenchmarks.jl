@@ -9,10 +9,6 @@ export @benchmarkd,
     set_benchmark_config_file,
     get_benchmark_files
 
-include("config.jl")
-include("utils.jl")
-using .Utils
-
 const BENCH_DIR = abspath(joinpath(@__DIR__, "..", "benchmarks"))
 const PROJECT_PATH = Base.RefValue{Union{Nothing, String}}(nothing)
 const BENCHMARK_CONFIG_FILE = Base.RefValue{Union{Nothing, String}}(nothing)
@@ -58,7 +54,8 @@ macro benchmarkd(name, expr)
     end
 end
 
-
+include("config.jl")
+include("utils.jl")
 include("turing-tools.jl")
 include("reporter.jl")
 include("runner.jl")
