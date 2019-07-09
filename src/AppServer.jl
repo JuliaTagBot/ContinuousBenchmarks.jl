@@ -10,7 +10,9 @@ using Logging
 using ..Config
 using ..Utils
 using ..Runner
-using ..ContinuousBenchmarks: PROJECT_PATH, set_project_path, set_benchmark_files
+using ..ContinuousBenchmarks: PROJECT_PATH,
+    set_project_path,
+    set_benchmark_config_file
 
 const event_queue = Channel{Any}(1024)
 const httpsock = Ref{Sockets.TCPServer}()
@@ -189,9 +191,9 @@ function main()
     global_logger(SimpleLogger(stdout, Config.log_level()))
 
     project_dir = Config.get_config("target.project_dir")
-    benchmark_files = Config.get_config("target.benchmark_files")
+    benchmark_config_file = Config.get_config("target.benchmark_config_file")
     set_project_path(project_dir)
-    set_benchmark_files(joinpath(project_dir, benchmark_files))
+    set_benchmark_config_file(joinpath(project_dir, benchmark_config_file))
 
     @info("Starting server...")
     handler_task = @async request_processor()

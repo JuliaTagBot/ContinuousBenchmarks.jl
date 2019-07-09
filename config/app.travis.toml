@@ -1,7 +1,7 @@
 [github]
 # the information of the bot account
-user = "TuringBenchBot"
-email = "TuringBenchBot@email.com"
+user = "BayesBot"
+email = "BayesBot@email.com"
 token = "PRIVATE_INFO"
 
 # Benchmark reports will be committed to this repo
@@ -13,4 +13,4 @@ report_branch = "report"
 repo = "TuringLang/Turing.jl"
 use_remote_branches = true
 project_dir = "."
-benchmark_files = "benchmarks/benchmark_list.jl"
+benchmark_config_file = "benchmarks/benchmark_config.jl"
