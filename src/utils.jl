@@ -1,5 +1,7 @@
 module Utils
 
+using CSV
+using DataFrames
 using Dates
 using JSON
 using Mustache
@@ -28,7 +30,8 @@ export
     # template
     code_bm_run,
     stringify_log,
-    generate_report
+    generate_report,
+    generate_report_dataframe
 
 
 const report_repo = Config.get_config("github.report_repo")
@@ -102,12 +105,13 @@ gitbranchshas(path, branches) = gitbranchsha.((path,), branches)
 
 project_root = (@__DIR__) |> dirname
 
-function result_filename(data)
-    filename = join([data["name"], data["engine"]], "_")
+function result_filename(filename)
     filename = replace(filename, [' ', ',', '('] => "_")
     filename = replace(filename, [')', '.', ':'] => "")
     filename
 end
+result_filename(data::Dict) = result_filename(data["name"] * "_" * data["engine"])
+result_filename(data::DataFrame) = result_filename(data[:name][1])
 
 function result_dir(name)
     project_dir = (@__DIR__) |> dirname
@@ -256,13 +260,10 @@ Please consider to fix it and trigger another one.
 const tmpl_code_bm_run = """
 using ContinuousBenchmarks;
 using ContinuousBenchmarks.Reporter;
-using ContinuousBenchmarks.JSON;
 
 include("{{{ :bm_file }}}");
-result_file = ContinuousBenchmarks.Utils.result_filename(LOG_DATA) * ".json"
-cd(() -> write(result_file, JSON.json(LOG_DATA, 2)), "{{{ :save_path }}}")
-log_file = ContinuousBenchmarks.Utils.result_filename(LOG_DATA) * ".log"
-Reporter.log_save(log_file, "{{{ :save_path }}}")
+Reporter.save_result(LOG_DATA, "{{{ :save_path }}}")
+Reporter.save_log(LOG_DATA, "{{{ :save_path }}}")
 """
 code_bm_run(data) = render(tmpl_code_bm_run, data)
 
@@ -355,6 +356,10 @@ function stringify_log(logd::Dict, monitor=[])
     render(tmpl_log_string, data)
 end
 
+function stringify_log(logd::DataFrame, monitor=[])
+    return string(logd)
+end
+
 const tmpl_report_md = """
 # Benchmark Report
 
@@ -367,14 +372,12 @@ const tmpl_report_md = """
 
 ## Results Table:
 
-Below is a table of this job's results, obtained by running the
-benchmarks found in
-[TuringLang/ContinuousBenchmarks](https://github.com/TuringLang/ContinuousBenchmarks). The
-table shows the time ratio of the N (N >= 2) Turing commits
-benchmarked. A ratio greater than `1.0` denotes a possible regression
-(marked with :-1:), while a ratio less than `1.0` denotes a possible
-improvement (marked with :+1:). Results are subject to
-noise so small fluctuations around `1.0` may be ignored.
+Below is a table of this job's results. The table shows the time ratio
+of the N (N >= 2) commits benchmarked. A ratio greater than `1.0`
+denotes a possible regression (marked with :-1:), while a ratio less
+than `1.0` denotes a possible improvement (marked with :+1:). Results
+are subject to noise so small fluctuations around `1.0` may be
+ignored.
 
 | BenchMark    | {{#branches}} TimeRatio({{{ name }}}) | {{/branches}}
 | -----------  | {{#branches}} ----------------------- | {{/branches}}
@@ -424,7 +427,7 @@ function generate_report(bm_name, branches, shas, base_branch = "")
     end
 
     for fname in result_files
-        base_br_idx = indexin(branches, [base_branch])[1]
+        base_br_idx = indexin([base_branch], branches)[1]
         base_sha = snip7(shas[base_br_idx])
         base_result_file = joinpath(result_path, base_sha, fname)
         base_result_json = read(open(base_result_file), String)
@@ -458,6 +461,72 @@ function generate_report(bm_name, branches, shas, base_branch = "")
     render(tmpl_report_md, data)
 end
 
+const tmpl_report_md_dataframe = """
+# Benchmark Report
+
+## Job properties
+
+**Turing Branches**:
+{{#branches}}
+- **{{{ name }}}**({{ sha }}) {{#is_base}}**[BASE_BRANCH]**{{/is_base}}
+{{/branches}}
+
+## Results Table:
+
+Below is a table of this job's results. The table shows the
+performance indicators of the N (N >= 2) commits benchmarked.
+
+| Row |{{#columns}} {{{ . }}} | {{/columns}}
+| --- |{{#columns}} --------- | {{/columns}}
+{{{ table_body }}}
+"""
+
+function generate_report_dataframe(bm_name, branches, shas, base_branch = "")
+    result_path = result_dir(bm_name)
+    if !(base_branch in branches)
+        base_branch = ("master" in branches) ? "master" : branches[1]
+    end
+
+    data = Dict{Any, Any}(
+        "branches" => [],
+    )
+
+    for (br, sha) in zip(branches, shas)
+        item = Dict{Any, Any}(
+            "name" => br,
+            "sha" => snip7(sha),
+            "is_base" => br == base_branch,
+        )
+        push!(data["branches"], item)
+    end
+
+    result_files = readdir(joinpath(result_path, snip7(shas[1])))
+    result_files = filter(result_files) do fname endswith(fname, ".csv") end
+    result_files = filter(result_files) do fname
+        all(isfile, map((sha) -> joinpath(result_path, snip7(sha), fname), shas))
+    end
+
+    sha_col = Vector{String}()
+    results = []
+
+    for fname in result_files
+        for sha in shas
+            result_file = joinpath(result_path, snip7(sha), fname)
+            result = CSV.read(result_file)
+            push!(results, result)
+            push!(sha_col, sha)
+        end
+    end
+
+    df_results = vcat(results...)
+    df_branches = DataFrame(Branch=branches[indexin(sha_col, shas)], Commit=snip7.(sha_col))
+    big_dataframe = hcat(df_branches, df_results)
+    table_body = join(split(replace(string(big_dataframe), "│" => "|"), "\n")[5:end], "\n")
+    data["table_body"] = table_body
+    data["columns"] = names(big_dataframe)
+
+    render(tmpl_report_md_dataframe, data)
+end
 
 function get_benchmark_log(bm_name)
     result_path = result_dir(bm_name)
