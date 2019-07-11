@@ -8,7 +8,7 @@ using ..Utils
 using ..Reporter
 using ..Config
 
-using ..ContinuousBenchmarks: get_benchmark_files
+using ..ContinuousBenchmarks: BENCHMARK_CONFIG_FILE, get_benchmark_files
 
 const report_repo = Config.get_config("github.report_repo")
 
@@ -80,8 +80,7 @@ end
 function run_benchmark(bm_path; save_path="")
     @info("Benchmarking `$bm_path` ... ")
     data = Dict(
-        :project_dir => dirname(@__DIR__),
-        :project_path => Config.get_config("target.project_dir", "."),
+        :config_file => BENCHMARK_CONFIG_FILE[],
         :bm_file => bm_path,
         :save_path => save_path,
     )

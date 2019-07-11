@@ -256,6 +256,9 @@ const tmpl_code_bm_run = """
 using ContinuousBenchmarks;
 using ContinuousBenchmarks.Reporter;
 
+{{#:config_file}}
+ContinuousBenchmarks.set_benchmark_config_file("{{{ :config_file }}}")
+{{/:config_file}}
 include("{{{ :bm_file }}}");
 Reporter.save_result(LOG_DATA, "{{{ :save_path }}}")
 Reporter.save_log(LOG_DATA, "{{{ :save_path }}}")

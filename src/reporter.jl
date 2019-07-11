@@ -138,7 +138,7 @@ end
 
 function save_result(log_data::Dict, path::String)
     if Config.get_config("reporter.use_dataframe", false)
-        return save_result(DataFrames(log_data), path)
+        return save_result(DataFrame(log_data), path)
     end
     result_file = Utils.result_filename(log_data) * ".json"
     cd(() -> write(result_file, JSON.json(log_data, 2)), path)
@@ -150,6 +150,9 @@ function save_result(log_data::DataFrame, path::String)
 end
 
 function save_log(log_data::Union{Dict, DataFrame}, path::String)
+    if Config.get_config("reporter.use_dataframe", false)
+        log_data = DataFrame(log_data)
+    end
     log_file = Utils.result_filename(log_data) * ".log"
     _log_save(log_file, path)
 end
