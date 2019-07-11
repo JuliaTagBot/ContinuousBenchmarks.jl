@@ -7,7 +7,6 @@ using JSON
 using Mustache
 
 using ..Config
-using ..ContinuousBenchmarks: COMMENT_TEMPLATES
 
 export
     # string
@@ -147,10 +146,6 @@ end
 bm_name(branch::String) = "BM-" * Dates.format(now(), "YYYYmmddHHMM-") * branch
 bm_name(brches::Vector{String}) = bm_name(nonmaster_br(brches))
 
-function get_comment_template(key::Symbol; default="")
-    haskey(COMMENT_TEMPLATES, key) ? COMMENT_TEMPLATES[key] : default
-end
-
 bm_file_content(user, issue_url, comment_url, branches) = """
 [trigger]
 issue_url = "$(issue_url)"
@@ -190,9 +185,9 @@ And below is the log reported from the benchmark:
 If it has no issues, please consider to merge or close this PullRequest.
 """
 function bm_pr_report_content(bm_name, commit_id, report_url)
-    tmpl = get_comment_template(
-        :APP_BM_COMPLETE_FOR_PR;
-        default=tmpl_bm_pr_report_content)
+    tmpl = Config.get_config(
+        "comment_templates.app_bm_complete_for_pr",
+        tmpl_bm_pr_report_content)
     report_logs = get_benchmark_log(bm_name)
     render(tmpl,
            Dict(:commit_id => commit_id,
@@ -216,9 +211,9 @@ Below is the log reported from the benchmark:
 ```
 """
 function bm_commit_report_content(bm_name, commit_id, report_url)
-    tmpl = get_comment_template(
-        :CI_BM_COMPLETE_FOR_COMMIT;
-        default=tmpl_bm_commit_report_content)
+    tmpl = Config.get_config(
+        "comment_templates.ci_bm_complete_for_commit",
+        tmpl_bm_commit_report_content)
     report_logs = get_benchmark_log(bm_name)
     render(tmpl,
            Dict(:report_repo => report_repo,
