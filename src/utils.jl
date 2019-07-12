@@ -386,6 +386,16 @@ performance indicators of the N (N >= 2) commits benchmarked.
 | Row |{{#columns}} {{{ . }}} | {{/columns}}
 | --- |{{#columns}} --------- | {{/columns}}
 {{{ table_body }}}
+
+## Benchmark Logs:
+
+The benchmark log (printed via `log_report`) can be found below.
+
+```
+{{#report_logs}}
+{{.}}
+{{/report_logs}}
+```
 """
 
 function generate_report_dataframe(bm_name, branches, shas, base_branch = "")
@@ -432,6 +442,7 @@ function generate_report_dataframe(bm_name, branches, shas, base_branch = "")
     table_body = join(split(replace(string(big_dataframe), "│" => "|"), "\n")[5:end], "\n")
     data["table_body"] = table_body
     data["columns"] = names(big_dataframe)
+    data["report_logs"] = get_benchmark_log(bm_name)
 
     render(tmpl_report_md_dataframe, data)
 end
