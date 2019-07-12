@@ -8,7 +8,7 @@ using ..Utils
 using ..Reporter
 using ..Config
 
-using ..ContinuousBenchmarks: get_benchmark_files, PROJECT_PATH
+using ..ContinuousBenchmarks: BENCHMARK_CONFIG_FILE, get_benchmark_files
 
 const report_repo = Config.get_config("github.report_repo")
 
@@ -42,12 +42,13 @@ end
 function local_benchmark(name, branch_names)
     @assert length(branch_names) > 1
     branch_names = [branch_names...]
-    gitbranches(PROJECT_PATH[], branch_names)
+    project_dir = Config.get_config("target.project_dir", ".")
+    gitbranches(project_dir, branch_names)
     result_path = result_dir(name)
-    shas = gitbranchshas(PROJECT_PATH[], branch_names)
+    shas = gitbranchshas(project_dir, branch_names)
 
     for (branch, sha) in zip(branch_names, shas)
-        onbranch(PROJECT_PATH[], branch) do
+        onbranch(project_dir, branch) do
             save_path = joinpath(result_path, snip7(sha))
             isdir(save_path) || mkdir(save_path)
             for bm_file in get_benchmark_files()
@@ -79,14 +80,14 @@ end
 function run_benchmark(bm_path; save_path="")
     @info("Benchmarking `$bm_path` ... ")
     data = Dict(
-        :project_dir => dirname(@__DIR__),
-        :project_path => PROJECT_PATH[],
+        :config_file => BENCHMARK_CONFIG_FILE[],
         :bm_file => bm_path,
         :save_path => save_path,
     )
     julia_path = joinpath(Sys.BINDIR, Base.julia_exename())
+    project_dir = Config.get_config("target.project_dir", ".")
     code = code_bm_run(data)
-    job = `$julia_path --project=$(PROJECT_PATH[]) -e $code`
+    job = `$julia_path --project=$(project_dir) -e $code`
     @info(job);
     run(job)
     @info("`$bm_path` ✓")

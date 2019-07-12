@@ -10,9 +10,7 @@ using Logging
 using ..Config
 using ..Utils
 using ..Runner
-using ..ContinuousBenchmarks: PROJECT_PATH,
-    set_project_path,
-    set_benchmark_config_file
+using ..ContinuousBenchmarks: set_benchmark_config_file
 
 const event_queue = Channel{Any}(1024)
 const httpsock = Ref{Sockets.TCPServer}()
@@ -41,7 +39,7 @@ function bm_from_comment(data)
         return
     end
     try
-        gitbranches(PROJECT_PATH[], branches)
+        gitbranches(Config.get_config("target.project_dir", "."), branches)
     catch ex # not all of the branches exist
         params = Dict("body" => "@$user $ex")
         create_comment(issue_repo, issue_no, :issue; params=params, auth=bot_auth)
@@ -192,7 +190,6 @@ function main()
 
     project_dir = Config.get_config("target.project_dir")
     benchmark_config_file = Config.get_config("target.benchmark_config_file")
-    set_project_path(project_dir)
     set_benchmark_config_file(joinpath(project_dir, benchmark_config_file))
 
     @info("Starting server...")

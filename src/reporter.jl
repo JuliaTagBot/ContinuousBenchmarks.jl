@@ -1,7 +1,10 @@
 module Reporter
 
-using GitHub
 using Base64
+using CSV
+using DataFrames
+using GitHub
+using JSON
 using Pkg
 
 using ..Config
@@ -39,7 +42,7 @@ function _log_report()
     end
     return (log_report, log_save)
 end
-log_report, log_save = _log_report()
+log_report, _log_save = _log_report()
 
 function send(benchmark, bm_info, report_file)
     bot_auth = GitHub.authenticate(bot_token)
@@ -133,8 +136,41 @@ function send_error(benchmark, bm_info, exc)
     create_comment(m[1], parse(Int, m[2]), :issue; params=params, auth=bot_auth)
 end
 
+function save_result(log_data::Dict, source::String, path::String)
+    if !haskey(log_data, "name")
+        log_data["name"] = basename(source)
+    end
+    if Config.get_config("reporter.use_dataframe", false)
+        return save_result(DataFrame(log_data), source, path)
+    end
+    result_file = Utils.result_filename(log_data) * ".json"
+    cd(() -> write(result_file, JSON.json(log_data, 2)), path)
+end
+
+function save_result(log_data::DataFrame, source::String, path::String)
+    if !in(:name, names(log_data))
+        row_count = size(log_data)[1]
+        name_col= DataFrame(name=repeat([basename(source)], row_count))
+        log_data = hcat(name_col, log_data)
+    end
+    result_file = Utils.result_filename(log_data) * ".csv"
+    cd(() -> CSV.write(result_file, log_data), path)
+end
+
+function save_log(log_data::Union{Dict, DataFrame}, path::String)
+    if Config.get_config("reporter.use_dataframe", false) && isa(log_data, Dict)
+        log_data = DataFrame(log_data)
+    end
+    log_file = Utils.result_filename(log_data) * ".log"
+    _log_save(log_file, path)
+end
+
 function write_report!(bm_name, filename, branches::Vector, shas::Vector, base_branch="")
-    report_md = generate_report(bm_name, branches, shas, base_branch)
+    if Config.get_config("reporter.use_dataframe", false)
+        report_md = generate_report_dataframe(bm_name, branches, shas, base_branch)
+    else
+        report_md = generate_report(bm_name, branches, shas, base_branch)
+    end
     result_path = joinpath(result_dir(bm_name), filename)
     write(result_path, report_md)
 end
