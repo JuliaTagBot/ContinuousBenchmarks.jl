@@ -260,110 +260,19 @@ using ContinuousBenchmarks.Reporter;
 ContinuousBenchmarks.set_benchmark_config_file("{{{ :config_file }}}")
 {{/:config_file}}
 include("{{{ :bm_file }}}");
-Reporter.save_result(LOG_DATA, "{{{ :save_path }}}")
+Reporter.save_result(LOG_DATA, "{{{ :bm_file }}}", "{{{ :save_path }}}")
 Reporter.save_log(LOG_DATA, "{{{ :save_path }}}")
 """
 code_bm_run(data) = render(tmpl_code_bm_run, data)
 
 # report template
 
-const tmpl_log_string = """
-/=======================================================================
-| Benchmark Result for >>> {{{ name }}} <<<
-|-----------------------------------------------------------------------
-| Overview
-|-----------------------------------------------------------------------
-| Inference Engine  : {{{ engine }}}
-| Time Used (s)     : {{{ time }}}
-{{#time_stan}}
-|   -> time by Stan : {{{ time_stan }}}
-{{/time_stan}}
-| Mem Alloc (bytes) : {{{ mem }}}
-{{#turing}}
-|-----------------------------------------------------------------------
-| Turing Inference Result
-|-----------------------------------------------------------------------
-{{/turing}}
-{{#turing_items}}
-| >> {{{ name }}} <<
-| mean = {{{ mean }}}
-{{#analytic}}
-|   -> analytic = {{{ analytic }}}
-{{/analytic}}
-{{#anal_diff}}
-|        |--*-->  diff = {{{ anal_diff }}}
-{{/anal_diff}}
-{{#stan}}
-|   -> Stan     = {{{ stan }}}
-{{/stan}}
-{{#stan_diff}}
-|        |--*--> diff = {{{ anal_diff }}}
-{{/stan_diff}}
-{{/turing_items}}
-{{#turing_strings}}
-| {{.}}
-{{/turing_strings}}
-{{#note}}
-|-----------------------------------------------------------------------
-| Note:
-|   {{{ note }}}
-{{/note}}
-\\=======================================================================
-"""
-
-function stringify_log(logd::Dict, monitor=[])
-    data = Dict{Any, Any}(
-        "name" => logd["name"],
-        "engine" => logd["engine"],
-        "time" => logd["time"],
-        "mem" => logd["mem"],
-    )
-    haskey(logd, "time_stan") && (data["time_stan"] = logd["time_stan"])
-    haskey(logd, "note") && (data["note"] = logd["note"])
-
-    if haskey(logd, "turing")
-        data["turing"] = true
-        data["turing_items"] = []
-        data["turing_strings"] = []
-        if isa(logd["turing"], String)
-            push!(data["turing_strings"], logd["turing"])
-        else
-            for (v, m) = logd["turing"]
-                (!isempty(monitor) && !(v in monitor)) && continue
-                item = Dict{Any, Any}("name" => v)
-                item["mean"] = round.(m, digits=3)
-                if haskey(logd, "analytic") && haskey(logd["analytic"], v)
-                    item["analytic"] = round(logd["analytic"][v], digits=3)
-                    diff = abs.(m - logd["analytic"][v])
-                    if sum(diff) > 0.2
-                        item["anal_diff"] = round(diff, digits=3)
-                    end
-                end
-                if haskey(logd, "stan") && haskey(logd["stan"], v)
-                    item["stan"] = round.(logd["stan"][v], digits=3)
-                    diff = abs.(m - logd["stan"][v])
-                    if sum(diff) > 0.2
-                        item["stan_diff"] = round.(diff, digits=3)
-                    end
-                end
-                push!(data["turing_items"], item)
-            end
-        end
-    end
-
-    render(tmpl_log_string, data)
-end
-
-function stringify_log(logd::DataFrame, monitor=[])
-    return string(logd)
-end
-
 const tmpl_report_md = """
 # Benchmark Report
 
 ## Job properties
 
-**Turing Branches**:
+**Target Project Branches**:
 {{#branches}}
 - **{{{ name }}}**({{ sha }}) {{#is_base}}**[BASE_BRANCH]**{{/is_base}}
 {{/branches}}
@@ -464,7 +373,7 @@ const tmpl_report_md_dataframe = """
 
 ## Job properties
 
-**Turing Branches**:
+**Target Project Branches**:
 {{#branches}}
 - **{{{ name }}}**({{ sha }}) {{#is_base}}**[BASE_BRANCH]**{{/is_base}}
 {{/branches}}
@@ -512,7 +421,8 @@ function generate_report_dataframe(bm_name, branches, shas, base_branch = "")
             result_file = joinpath(result_path, snip7(sha), fname)
             result = CSV.read(result_file)
             push!(results, result)
-            push!(sha_col, sha)
+            row_count = size(result)[1]
+            push!(sha_col, repeat([sha], row_count)...)
         end
     end
 

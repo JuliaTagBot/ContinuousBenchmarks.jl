@@ -136,21 +136,29 @@ function send_error(benchmark, bm_info, exc)
     create_comment(m[1], parse(Int, m[2]), :issue; params=params, auth=bot_auth)
 end
 
-function save_result(log_data::Dict, path::String)
+function save_result(log_data::Dict, source::String, path::String)
+    if !haskey(log_data, "name")
+        log_data["name"] = basename(source)
+    end
     if Config.get_config("reporter.use_dataframe", false)
-        return save_result(DataFrame(log_data), path)
+        return save_result(DataFrame(log_data), source, path)
     end
     result_file = Utils.result_filename(log_data) * ".json"
     cd(() -> write(result_file, JSON.json(log_data, 2)), path)
 end
 
-function save_result(log_data::DataFrame, path::String)
+function save_result(log_data::DataFrame, source::String, path::String)
+    if !in(:name, names(log_data))
+        row_count = size(log_data)[1]
+        name_col= DataFrame(name=repeat([basename(source)], row_count))
+        log_data = hcat(name_col, log_data)
+    end
     result_file = Utils.result_filename(log_data) * ".csv"
     cd(() -> CSV.write(result_file, log_data), path)
 end
 
 function save_log(log_data::Union{Dict, DataFrame}, path::String)
-    if Config.get_config("reporter.use_dataframe", false)
+    if Config.get_config("reporter.use_dataframe", false) && isa(log_data, Dict)
         log_data = DataFrame(log_data)
     end
     log_file = Utils.result_filename(log_data) * ".log"

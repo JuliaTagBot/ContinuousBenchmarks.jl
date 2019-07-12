@@ -1,7 +1,9 @@
 module TuringTools
 # Tools for Turing
 
+using DataFrames
 using Dates
+using Mustache
 
 using ..Utils
 
@@ -17,51 +19,113 @@ macro tbenchmark(alg, model, data)
     esc(quote
         $model_dfn
         chain, t_elapsed, mem, gctime, memallocs  = @timed sample(model_f, $alg)
-        $(string(alg)), t_elapsed, mem, chain, deepcopy(chain)
+        Dict(
+            "engine" => $(string(alg)),
+            "time" => t_elapsed,
+            "memory" => mem,
+        )
         end)
 end
 
-macro tbenchmark_expr(name, expr)
+macro tbenchmark_expr(engine, expr)
     quote
         chain, t_elapsed, mem, gctime, memallocs  = @timed $(esc(expr))
-        $(string(name)), t_elapsed, mem, chain, deepcopy(chain)
+        Dict(
+            "engine" => $(string(engine)),
+            "time" => t_elapsed,
+            "memory" => mem,
+        )
     end
 end
 
-# Build log_data from Turing chain
-function set_log_info!(log_data::Dict, monitor=[])
-    project_dir = unsafe_string(Base.JLOptions().project)
-    project_head = ""
-    try
-        project_head = githeadsha(project_dir)
-    catch err
-        @warn("Error: failed to get commit info from $project_dir")
-        (:msg in fieldnames(typeof(err))) ? @warn(err.msg) : @warn(err)
-        return log_data
-    end
-    @assert project_head != ""
+const tmpl_log_string = """
+/=======================================================================
+| Benchmark Result
+|-----------------------------------------------------------------------
+| Overview
+|-----------------------------------------------------------------------
+| Inference Engine  : {{{ engine }}}
+| Time Used (s)     : {{{ time }}}
+{{#time_stan}}
+|   -> time by Stan : {{{ time_stan }}}
+{{/time_stan}}
+| Mem Alloc (bytes) : {{{ memory }}}
+{{#turing}}
+|-----------------------------------------------------------------------
+| Turing Inference Result
+|-----------------------------------------------------------------------
+{{/turing}}
+{{#turing_items}}
+| >> {{{ name }}} <<
+| mean = {{{ mean }}}
+{{#analytic}}
+|   -> analytic = {{{ analytic }}}
+{{/analytic}}
+{{#anal_diff}}
+|        |--*-->  diff = {{{ anal_diff }}}
+{{/anal_diff}}
+{{#stan}}
+|   -> Stan     = {{{ stan }}}
+{{/stan}}
+{{#stan_diff}}
+|        |--*--> diff = {{{ anal_diff }}}
+{{/stan_diff}}
+{{/turing_items}}
+{{#turing_strings}}
+| {{.}}
+{{/turing_strings}}
+{{#note}}
+|-----------------------------------------------------------------------
+| Note:
+|   {{{ note }}}
+{{/note}}
+\\=======================================================================
+"""
 
-    time_str = Dates.format(now(), "dd-u-yyyy-HH-MM-SS")
-    log_data["created"] = time_str
-    log_data["project_commit"] = project_head
-    return log_data
-end
-
-function build_log_data(name::String, engine::String, time, mem, tchain, _)
-    mn(c, v) = mean(convert(Array, c[Symbol(v)][min(1001, 9*end÷10):end]))
-    turing_data = try
-        Dict(v => mn(tchain, v) for v in keys(tchain))
-    catch
-        string(tchain)[1:min(700, end)]
-    end
-    log_data = Dict(
-        "name" => name,
-        "engine" => engine,
-        "time" => time,
-        "mem" => mem,
-        "turing" => turing_data
+function stringify_log(logd::Dict, monitor=[])
+    data = Dict{Any, Any}(
+        # "name" => logd["name"],
+        "engine" => logd["engine"],
+        "time" => logd["time"],
+        "memory" => logd["memory"],
     )
-    set_log_info!(log_data)
+    haskey(logd, "time_stan") && (data["time_stan"] = logd["time_stan"])
+    haskey(logd, "note") && (data["note"] = logd["note"])
+
+    if haskey(logd, "turing")
+        data["turing"] = true
+        data["turing_items"] = []
+        data["turing_strings"] = []
+        if isa(logd["turing"], String)
+            push!(data["turing_strings"], logd["turing"])
+        else
+            for (v, m) = logd["turing"]
+                (!isempty(monitor) && !(v in monitor)) && continue
+                item = Dict{Any, Any}("name" => v)
+                item["mean"] = round.(m, digits=3)
+                if haskey(logd, "analytic") && haskey(logd["analytic"], v)
+                    item["analytic"] = round(logd["analytic"][v], digits=3)
+                    diff = abs.(m - logd["analytic"][v])
+                    if sum(diff) > 0.2
+                        item["anal_diff"] = round(diff, digits=3)
+                    end
+                end
+                if haskey(logd, "stan") && haskey(logd["stan"], v)
+                    item["stan"] = round.(logd["stan"][v], digits=3)
+                    diff = abs.(m - logd["stan"][v])
+                    if sum(diff) > 0.2
+                        item["stan_diff"] = round.(diff, digits=3)
+                    end
+                end
+                push!(data["turing_items"], item)
+            end
+        end
+    end
+    render(tmpl_log_string, data)
+end
+
+function stringify_log(logd::DataFrame, monitor=[])
+    return string(logd)
 end
 
 print_log(log_data::Dict, monitor=[]) = print(stringify_log(log_data, monitor))
